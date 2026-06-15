@@ -66,7 +66,32 @@ select option{background:var(--card)}
 .dr.sub{border-top:1px solid var(--border);border-bottom:none;margin-top:3px;padding-top:7px;font-weight:700}
 ::-webkit-scrollbar{width:4px}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
-@media(max-width:900px){.main{grid-template-columns:1fr;height:auto}.kgrid{grid-template-columns:repeat(2,1fr)}.dgrid{grid-template-columns:1fr}}
+@media(max-width:900px){
+  .main{grid-template-columns:1fr;height:auto}
+  .kgrid{grid-template-columns:repeat(2,1fr)}
+  .dgrid{grid-template-columns:1fr}
+  .mob-yr-bar{display:flex!important}
+  table.dtbl [data-year]{display:none}
+  table.dtbl [data-year].myr-on{display:table-cell}
+  table.dtbl [data-col="invest"],table.dtbl [data-col="total"]{display:none}
+  table.dtbl td:first-child,table.dtbl th:first-child{min-width:160px!important;font-size:0.72rem}
+  table.dtbl [data-year].myr-on{min-width:90px;font-size:0.8rem;text-align:right}
+  .tbl-wrap{border-radius:8px}
+}
+.mob-yr-bar{display:none;overflow-x:auto;gap:6px;padding:6px 2px 10px;scrollbar-width:none}
+.mob-yr-bar::-webkit-scrollbar{display:none}
+.mob-yr-btn{flex-shrink:0;padding:5px 13px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--dim);font-size:0.72rem;cursor:pointer;white-space:nowrap;transition:.15s}
+.mob-yr-btn.active{background:var(--gold);color:#000;border-color:var(--gold);font-weight:700}
+.mob-tabs{display:none;background:var(--navy2);border-bottom:1px solid var(--border);padding:8px 14px;gap:8px;flex-shrink:0}
+.mob-tab-btn{flex:1;padding:11px;border-radius:8px;font-size:0.82rem;font-weight:600;cursor:pointer;transition:.2s;border:1px solid var(--border)}
+.mob-tab-btn.active{background:var(--gold);color:var(--navy);font-weight:700;border-color:var(--gold)}
+.mob-tab-btn:not(.active){background:transparent;color:var(--dim)}
+@media(max-width:900px){
+  .mob-tabs{display:flex}
+  .main{height:calc(100vh - 118px);overflow:hidden}
+  .left,.right{display:none;height:100%;overflow-y:auto}
+  .left.mob-active,.right.mob-active{display:block}
+}
 .tabs{display:flex;gap:6px;margin-bottom:14px}
 .tab-btn{padding:7px 20px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--dim);font-size:0.78rem;font-weight:600;cursor:pointer;transition:.2s}
 .tab-btn.active{background:var(--gold);color:#000;border-color:var(--gold)}
@@ -96,8 +121,19 @@ table.dtbl .blu{color:var(--blue)}
   </div>
 </div>
 
+<div class="mob-tabs">
+  <button class="mob-tab-btn active" id="mob-tab-s" onclick="mobTab('settings')">⚙ Settings</button>
+  <button class="mob-tab-btn" id="mob-tab-r" onclick="mobTab('results')">📊 Results</button>
+</div>
+
 <div class="main">
-<div class="left">
+<div class="left mob-active" id="mob-left">
+
+  <!-- Mode Toggle -->
+  <div style="display:flex;gap:0;margin-bottom:16px;border:1px solid var(--border);border-radius:8px;overflow:hidden">
+    <button id="btn-altbau" onclick="setMode('altbau')" style="flex:1;padding:9px;background:var(--gold);color:var(--navy);border:none;font-weight:700;font-size:0.78rem;cursor:pointer">Altbau / Renovation</button>
+    <button id="btn-neubau" onclick="setMode('neubau')" style="flex:1;padding:9px;background:transparent;color:var(--dim);border:none;font-size:0.78rem;cursor:pointer;letter-spacing:0.3px">Neubau</button>
+  </div>
 
   <div class="sec">
     <div class="sec-title">🏠 Property Details</div>
@@ -117,7 +153,28 @@ table.dtbl .blu{color:var(--blue)}
     <div class="sec-title">💳 Financing</div>
     <div class="row"><div class="lbl"><span>Interest Rate (%)</span><span class="val" id="d-ir">4.5%</span></div><div class="sg"><input type="range" id="s-ir" min="1" max="8" step="0.1" value="4.5"><input type="number" id="n-ir" value="4.5" step="0.1"></div></div>
     <div class="row"><div class="lbl"><span>Amortization Rate (%)</span><span class="val" id="d-amort">1.0%</span></div><div class="sg"><input type="range" id="s-amort" min="0.5" max="5" step="0.1" value="1.0"><input type="number" id="n-amort" value="1.0" step="0.1"></div></div>
-    <div class="row"><div class="lbl"><span>AfA Rate — §7b EStG (%)</span><span class="val" id="d-afa">5.0%</span></div><div class="sg"><input type="range" id="s-afa" min="2" max="10" step="0.5" value="5"><input type="number" id="n-afa" value="5" step="0.5"></div></div>
+    <div id="row-altbau-afa"><div class="row"><div class="lbl"><span>AfA Rate — §7b EStG (%)</span><span class="val" id="d-afa">5.0%</span></div><div class="sg"><input type="range" id="s-afa" min="2" max="10" step="0.5" value="5"><input type="number" id="n-afa" value="5" step="0.5"></div></div></div>
+  </div>
+
+  <!-- Neubau: KfW + §7b AfA section -->
+  <div class="sec" id="sec-neubau" style="display:none">
+    <div class="sec-title">🏗️ Neubau — KfW & §7b AfA</div>
+    <div style="font-size:0.7rem;color:var(--dim);margin-bottom:10px;line-height:1.6">
+      §7b: extra <strong style="color:var(--gold)">5%/year</strong> for first 4 years (capped at €4,800/m²). Degressive AfA: <strong style="color:var(--gold)">5%</strong> of remaining book value each year.
+    </div>
+    <div class="row"><div class="lbl"><span>Apartment Size (m²)</span><span class="val" id="d-area">63 m²</span></div><div class="sg"><input type="range" id="s-area" min="20" max="300" step="1" value="63"><input type="number" id="n-area" value="63"></div></div>
+    <div id="neubau-eligibility" style="font-size:0.72rem;padding:7px 10px;border-radius:6px;margin:6px 0 10px;background:rgba(46,204,113,0.08);border:1px solid rgba(46,204,113,0.25);color:var(--green)">✓ Eligible for §7b — price/m² within €5,200 limit</div>
+    <div class="row"><div class="lbl"><span>KfW Loan (€)</span><span class="val" id="d-kfw">€150,000</span></div><div class="sg"><input type="range" id="s-kfw" min="0" max="150000" step="5000" value="150000"><input type="number" id="n-kfw" value="150000"></div></div>
+    <div class="row"><div class="lbl"><span>KfW Interest Rate (%)</span><span class="val" id="d-kfw-ir">2.5%</span></div><div class="sg"><input type="range" id="s-kfw-ir" min="0.5" max="6" step="0.1" value="2.5"><input type="number" id="n-kfw-ir" value="2.5" step="0.1"></div></div>
+    <div style="display:flex;align-items:center;gap:10px;margin-top:10px;font-size:0.78rem;color:var(--dim)">
+      <input type="checkbox" id="switch-linear" onchange="calculate()" style="accent-color:var(--gold);width:14px;height:14px">
+      <label for="switch-linear">Switch to linear 3% AfA after Year 4</label>
+    </div>
+    <div id="neubau-afa-info" style="font-size:0.7rem;margin-top:10px;padding:8px 10px;border-radius:6px;background:rgba(255,255,255,0.04);border:1px solid var(--border);line-height:1.8">
+      <div>§7b base (capped at €4,800/m²): <span style="color:var(--gold);font-weight:700" id="d-7b-base">—</span></div>
+      <div>§7b deduction/year (Yrs 1–4): <span style="color:var(--gold);font-weight:700" id="d-7b-annual">—</span></div>
+      <div>Bank loan: <span style="color:var(--gold);font-weight:700" id="d-bank-loan">—</span></div>
+    </div>
   </div>
 
   <div class="sec">
@@ -126,7 +183,7 @@ table.dtbl .blu{color:var(--blue)}
     <div class="row"><div class="lbl"><span>Tenant Management (€/year)</span><span class="val" id="d-tmgmt">€600</span></div><div class="sg"><input type="range" id="s-tmgmt" min="0" max="3000" step="100" value="600"><input type="number" id="n-tmgmt" value="600"></div></div>
   </div>
 
-  <div class="sec">
+  <div class="sec" id="sec-renov">
     <div class="sec-title">🏗️ Year 1 Renovation — §6 EStG</div>
     <div style="font-size:0.7rem;color:var(--dim);margin-bottom:10px;line-height:1.5">
       Costs below 15% of building value are <span style="color:var(--green);font-weight:700">immediately deductible</span> in Year 1 as Werbungskosten. Above 15% → must be capitalised (AfA only).
@@ -168,7 +225,7 @@ table.dtbl .blu{color:var(--blue)}
 
 </div><!-- end left -->
 
-<div class="right">
+<div class="right" id="mob-right">
   <div class="tabs">
     <button class="tab-btn active" onclick="switchTab('summary',this)">Summary</button>
     <button class="tab-btn" onclick="switchTab('detail',this)">Year-by-Year</button>
@@ -239,6 +296,7 @@ table.dtbl .blu{color:var(--blue)}
   </div><!-- end tab-summary -->
 
   <div id="tab-detail" style="display:none">
+    <div class="mob-yr-bar" id="mob-yr-bar"></div>
     <div class="tbl-wrap">
       <table class="dtbl" id="detail-table"></table>
     </div>
@@ -327,6 +385,19 @@ function updateChart(labels, propData, etfData) {
   });
 }
 
+// ── Mode Toggle ───────────────────────────────────────────────
+let currentMode = 'altbau';
+function setMode(m) {
+  currentMode = m;
+  const isN = m === 'neubau';
+  G('btn-altbau').style.cssText = `flex:1;padding:9px;background:${isN?'transparent':'var(--gold)'};color:${isN?'var(--dim)':'var(--navy)'};border:none;font-weight:${isN?'400':'700'};font-size:0.78rem;cursor:pointer`;
+  G('btn-neubau').style.cssText = `flex:1;padding:9px;background:${isN?'var(--gold)':'transparent'};color:${isN?'var(--navy)':'var(--dim)'};border:none;font-weight:${isN?'700':'400'};font-size:0.78rem;cursor:pointer;letter-spacing:0.3px`;
+  G('sec-neubau').style.display  = isN ? '' : 'none';
+  G('row-altbau-afa').style.display = isN ? 'none' : '';
+  G('sec-renov').style.display   = isN ? 'none' : '';
+  calculate();
+}
+
 // ── Main Calculation ──────────────────────────────────────────
 function calculate() {
   const price    = N('n-price');
@@ -349,25 +420,59 @@ function calculate() {
   const yrs      = Math.round(N('n-years'));
   const etfR     = N('n-etf')/100;
 
+  // ── Neubau params ─────────────────────────────────────────
+  const isNeubau    = currentMode === 'neubau';
+  const area        = isNeubau ? N('n-area') : 0;
+  const kfwLoan     = isNeubau ? Math.min(N('n-kfw'), price) : 0;
+  const kfwIR       = isNeubau ? N('n-kfw-ir')/100 : 0;
+  const switchLin   = isNeubau && G('switch-linear').checked;
+  const bankLoan    = isNeubau ? price - kfwLoan : price;
+  const pricePerSqm = area > 0 ? price / area : 0;
+  const eligible7b  = area > 0 && pricePerSqm <= 5200;
+  const buildingVal = price * buildPct;
+  const base7b      = eligible7b ? Math.min(buildingVal, 4800 * area) : 0;
+  const afa7bAnnual = base7b * 0.05;
+
+  if(isNeubau){
+    const eligEl = G('neubau-eligibility');
+    if(area === 0){
+      eligEl.style.cssText = 'font-size:0.72rem;padding:7px 10px;border-radius:6px;margin:6px 0 10px;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--dim)';
+      eligEl.textContent = 'Enter apartment size to check eligibility';
+    } else if(eligible7b){
+      eligEl.style.cssText = 'font-size:0.72rem;padding:7px 10px;border-radius:6px;margin:6px 0 10px;background:rgba(46,204,113,0.08);border:1px solid rgba(46,204,113,0.25);color:var(--green)';
+      eligEl.textContent = `✓ Eligible for §7b — price/m² is €${Math.round(pricePerSqm).toLocaleString('de-DE')} (under €5,200 limit)`;
+    } else {
+      eligEl.style.cssText = 'font-size:0.72rem;padding:7px 10px;border-radius:6px;margin:6px 0 10px;background:rgba(231,76,60,0.08);border:1px solid rgba(231,76,60,0.25);color:var(--red)';
+      eligEl.textContent = `✗ Not eligible — price/m² is €${Math.round(pricePerSqm).toLocaleString('de-DE')}, exceeds €5,200 limit`;
+    }
+    G('d-7b-base').textContent   = eligible7b ? '€'+Math.round(base7b).toLocaleString('de-DE') : 'Not eligible';
+    G('d-7b-annual').textContent = eligible7b ? '€'+Math.round(afa7bAnnual).toLocaleString('de-DE') : '—';
+    G('d-bank-loan').textContent = '€'+Math.round(bankLoan).toLocaleString('de-DE');
+  }
+
   // Costs & equity
   const ttax   = price*ttaxPct;
   const notary = price*notPct;
   const broker = price*brkPct;
   const equity = ttax+notary+broker;
 
-  // Monthly cashflow
-  const mInt   = price*ir/12;
-  const mAmort = price*amortPct/12;
-  const mHmgmt = hmgmt/12;
-  const mTmgmt = tmgmt/12;
-  const pretax = rent - mInt - mAmort - mHmgmt - mTmgmt;
+  // Monthly cashflow (Neubau: two loans; Altbau: one loan)
+  const mIntBank = bankLoan*ir/12;
+  const mIntKfw  = kfwLoan*kfwIR/12;
+  const mInt     = isNeubau ? mIntBank + mIntKfw : price*ir/12;
+  const mAmort   = isNeubau ? (bankLoan+kfwLoan)*amortPct/12 : price*amortPct/12;
+  const mHmgmt   = hmgmt/12;
+  const mTmgmt   = tmgmt/12;
+  const pretax   = rent - mInt - mAmort - mHmgmt - mTmgmt;
 
-  // AfA
+  // AfA — Altbau: user-set rate; Neubau Year 1: §7b + degressive (approximated as Year 1 value for summary card)
   const afaBase   = (price+ttax+notary)*buildPct;
-  const afaAnnual = afaBase*afaRate;
+  const afaAnnual = isNeubau
+    ? afa7bAnnual + buildingVal*0.05          // Year 1 Neubau: §7b + degressive on full building val
+    : afaBase*afaRate;
 
-  // Rental loss
-  const aInt       = price*ir;
+  // Rental loss (Year 1 representative for summary)
+  const aInt       = isNeubau ? (bankLoan+kfwLoan)*ir : price*ir;
   const rentalLoss = rent*12 - aInt - hmgmt - tmgmt - afaAnnual;
 
   // Renovation threshold
@@ -463,28 +568,32 @@ function calculate() {
   G('kpi-eq-sub').textContent    = 'after '+yrs+' years';
   G('kpi-etf-sub').textContent   = 'after '+yrs+' years';
 
-  const annualPmt = price*(ir+amortPct);
   const monthlyOOP = Math.abs(netMOOP);
   const monthlyR = etfR/12;
   const yearFactor = Math.pow(1+monthlyR, 12);
 
   const labels=['·'], propArr=[0], etfArr=[equity];
-  let debt=price, etfVal=equity;
+  let chDebtB = isNeubau ? bankLoan : price;
+  let chDebtK = kfwLoan;
+  let etfVal=equity;
 
   for (let y=1;y<=yrs;y++){
     labels.push('Y'+y);
-    const intY = debt*ir;
-    const amY  = Math.min(debt, annualPmt-intY);
-    debt = Math.max(0, debt-amY);
+    const intB = chDebtB*ir;
+    const amB  = Math.min(chDebtB, bankLoan*(ir+amortPct) - intB);
+    chDebtB = Math.max(0, chDebtB - amB);
+    const intK = chDebtK*kfwIR;
+    const amK  = Math.min(chDebtK, kfwLoan*(kfwIR+amortPct) - intK);
+    chDebtK  = Math.max(0, chDebtK - amK);
     const propVal = price*Math.pow(1+appr,y);
-    propArr.push(Math.round(propVal-debt));
+    propArr.push(Math.round(propVal - chDebtB - chDebtK));
     etfVal = etfVal*yearFactor + monthlyOOP*(yearFactor-1)/monthlyR;
     etfArr.push(Math.round(etfVal));
   }
 
   const finalProp    = propArr[yrs];
   const finalEtf     = etfArr[yrs];
-  const finalDebt    = debt;
+  const finalDebt    = chDebtB + chDebtK;
   const finalPropVal = price*Math.pow(1+appr,yrs);
   const totalIn      = equity+monthlyOOP*12*yrs;
 
@@ -504,7 +613,8 @@ function calculate() {
   buildDetailTable(yrs, price, ir, amortPct, rent, hmgmt, tmgmt, afaAnnual,
                    equity, appr, uTax, sTax, cls, kirche,
                    monthlyOOP, monthlyR, yearFactor,
-                   renovCost, renovValid ? renovCost : 0);
+                   renovCost, renovValid ? renovCost : 0,
+                   isNeubau, bankLoan, kfwLoan, kfwIR, base7b, afa7bAnnual, buildingVal, switchLin);
 }
 
 // ── Slider ↔ Input linking ────────────────────────────────────
@@ -537,6 +647,9 @@ document.addEventListener('DOMContentLoaded',()=>{
   link('s-years','n-years','d-years',yr);
   link('s-etf','n-etf','d-etf',pct);
   link('s-renov','n-renov','d-renov',eur);
+  link('s-area','n-area','d-area',v=>Math.round(v)+' m²');
+  link('s-kfw','n-kfw','d-kfw',eur);
+  link('s-kfw-ir','n-kfw-ir','d-kfw-ir',pct);
 
   G('tax-class').onchange=()=>{ calculate(); };
   G('kirche').onchange=calculate;
@@ -564,22 +677,52 @@ function switchTab(name, btn) {
 function buildDetailTable(yrs, price, ir, amortPct, rent, hmgmt, tmgmt, afa,
                           equity, appr, uTax, sTax, cls, kirche,
                           monthlyOOP, monthlyR, yearFactor,
-                          renovCost=0, renovDeductible=0) {
+                          renovCost=0, renovDeductible=0,
+                          isNeubau=false, bankLoan=price, kfwLoan=0, kfwIR=0,
+                          base7b=0, afa7bAnnual=0, buildingVal=0, switchLin=false) {
 
-  const annualPmt = price*(ir+amortPct);
+  const annualPmt = isNeubau
+    ? bankLoan*(ir+amortPct) + kfwLoan*(kfwIR+amortPct)
+    : price*(ir+amortPct);
   const intA=[], amA=[], rentA=[], taxSavA=[], netCFBeforeTaxA=[], netCFAfterTaxA=[];
   const propValA=[], debtA=[], netEqA=[], taxableWithA=[], tWithA=[], tWOA=[], rentalProfitA=[];
-  let debt=price;
+  const intBankA=[], intKfwA=[], amBankA=[], amKfwA=[], afaYA=[];
+  let debtBank = isNeubau ? bankLoan : price;
+  let debtKfw  = kfwLoan;
+  let remainBV = buildingVal; // remaining building value for degressive AfA
 
   for(let y=1;y<=yrs;y++){
-    const rentY      = rent*12;
-    const intY       = debt*ir;
-    const amY        = Math.min(debt, annualPmt-intY);
-    debt = Math.max(0, debt-amY);
+    const rentY = rent*12;
+    // Interest & amortization (one or two loans)
+    const intBankY = debtBank*ir;
+    const amBankY  = Math.min(debtBank, bankLoan*(ir+amortPct) - intBankY);
+    debtBank = Math.max(0, debtBank - amBankY);
+    const intKfwY = debtKfw*kfwIR;
+    const amKfwY  = Math.min(debtKfw, kfwLoan*(kfwIR+amortPct) - intKfwY);
+    debtKfw  = Math.max(0, debtKfw - amKfwY);
+    const intY = isNeubau ? intBankY + intKfwY : intBankY;
+    const amY  = isNeubau ? amBankY  + amKfwY  : amBankY;
+    const debt = debtBank + debtKfw;
+
     const propVal    = price*Math.pow(1+appr,y);
-    const renovD     = y===1 ? renovDeductible : 0;   // tax deduction (only if within threshold)
-    const renovSpend = y===1 ? renovCost : 0;          // actual cash out regardless of deductibility
-    const rentalLossY = rentY - intY - hmgmt - tmgmt - afa - renovD;  // taxable rental P&L
+
+    // AfA: Neubau = §7b (yrs 1-4) + degressive; Altbau = fixed rate
+    let afaY;
+    if(isNeubau){
+      const afaDegY = remainBV * 0.05;
+      const use3pct = switchLin && y > 4;
+      const afaLinY = buildingVal * 0.03;
+      const afaBaseY = use3pct ? afaLinY : afaDegY;
+      const afaSpecY = y <= 4 ? afa7bAnnual : 0;
+      afaY = Math.min(afaSpecY + afaBaseY, remainBV);
+      remainBV = Math.max(0, remainBV - afaY);
+    } else {
+      afaY = afa;
+    }
+
+    const renovD     = (!isNeubau && y===1) ? renovDeductible : 0;
+    const renovSpend = (!isNeubau && y===1) ? renovCost : 0;
+    const rentalLossY = rentY - intY - hmgmt - tmgmt - afaY - renovD;
     const cWO   = uTax+sTax;
     const cWith = Math.max(0, cWO + Math.min(0, rentalLossY));
     const tWO   = calcTax(cWO,  cls)*(kirche?1.08:1);
@@ -591,7 +734,10 @@ function buildDetailTable(yrs, price, ir, amortPct, rent, hmgmt, tmgmt, afa,
     netCFBeforeTaxA.push(netCFBefore); netCFAfterTaxA.push(netCFAfter);
     propValA.push(propVal); debtA.push(debt); netEqA.push(propVal-debt);
     taxableWithA.push(cWith); tWithA.push(tWith); tWOA.push(tWO);
-    rentalProfitA.push(rentalLossY);  // correctly reflects renovation deduction in Year 1
+    rentalProfitA.push(rentalLossY);
+    intBankA.push(intBankY); intKfwA.push(intKfwY);
+    amBankA.push(amBankY);  amKfwA.push(amKfwY);
+    afaYA.push(afaY);
   }
 
   const fv = v => v===null||v===undefined||Math.round(Math.abs(v))===0 ? '—' : (v<0?'-':'+')+'€'+Math.round(Math.abs(v)).toLocaleString('de-DE');
@@ -604,9 +750,9 @@ function buildDetailTable(yrs, price, ir, amortPct, rent, hmgmt, tmgmt, afa,
 
   let html = '<thead><tr>';
   html += `<th style="text-align:left;position:sticky;left:0;z-index:3;min-width:240px;background:var(--navy2)">Detail</th>`;
-  html += `<th style="min-width:110px;border-left:${BL}">Investment</th>`;
-  for(let y=1;y<=yrs;y++) html+=`<th style="min-width:100px;border-left:${BL}">Year ${y}</th>`;
-  html += `<th style="min-width:110px;border-left:${BL}">In Total</th>`;
+  html += `<th data-col="invest" style="min-width:110px;border-left:${BL}">Investment</th>`;
+  for(let y=1;y<=yrs;y++) html+=`<th data-year="${y}" style="min-width:100px;border-left:${BL}">Year ${y}</th>`;
+  html += `<th data-col="total" style="min-width:110px;border-left:${BL}">In Total</th>`;
   html += '</tr></thead><tbody>';
 
   let sid=0, csid=0;
@@ -616,9 +762,9 @@ function buildDetailTable(yrs, price, ir, amortPct, rent, hmgmt, tmgmt, afa,
     sid++; csid=sid;
     let r = `<tr class="sec-row" onclick="toggleSec('ds${csid}',this)" style="cursor:pointer">
       <td><span class="sec-icon" style="margin-right:8px;font-size:0.7rem">▼</span>${lbl}</td>`;
-    r += `<td class="${cls2}">${investVal!=null ? fv(investVal) : '—'}</td>`;
-    yearVals.forEach(v=>{ r+=`<td class="${cls2}">${v!=null ? fv(v) : '—'}</td>`; });
-    r += `<td class="${cls2}" style="font-weight:700">${totalVal!=null ? fv(totalVal) : '—'}</td>`;
+    r += `<td data-col="invest" class="${cls2}">${investVal!=null ? fv(investVal) : '—'}</td>`;
+    yearVals.forEach((v,i)=>{ r+=`<td data-year="${i+1}" class="${cls2}">${v!=null ? fv(v) : '—'}</td>`; });
+    r += `<td data-col="total" class="${cls2}" style="font-weight:700">${totalVal!=null ? fv(totalVal) : '—'}</td>`;
     return r+'</tr>';
   };
 
@@ -629,40 +775,40 @@ function buildDetailTable(yrs, price, ir, amortPct, rent, hmgmt, tmgmt, afa,
     const tot = arr ? sumOf(arr) : null;
     const s = indent ? 'padding-left:28px;font-style:italic;color:var(--dim)' : '';
     let r = `<tr ${hid()}><td style="${s}">${lbl}</td>`;
-    r += `<td class="${cls2}">${investVal!=null ? fv(investVal) : '—'}</td>`;
-    if(arr) arr.forEach(v=>{ r+=`<td class="${cls2}">${fv(v)}</td>`; });
-    else for(let i=0;i<yrs;i++) r+='<td>—</td>';
-    r += `<td class="${cls2}" style="font-weight:700">${tot!=null ? fv(tot) : '—'}</td>`;
+    r += `<td data-col="invest" class="${cls2}">${investVal!=null ? fv(investVal) : '—'}</td>`;
+    if(arr) arr.forEach((v,i)=>{ r+=`<td data-year="${i+1}" class="${cls2}">${fv(v)}</td>`; });
+    else for(let i=0;i<yrs;i++) r+=`<td data-year="${i+1}">—</td>`;
+    r += `<td data-col="total" class="${cls2}" style="font-weight:700">${tot!=null ? fv(tot) : '—'}</td>`;
     return r+'</tr>';
   };
 
   // Collapsible plain row (no € — for months)
   const plainRow = (lbl, arr) => {
-    let r = `<tr ${hid()}><td>${lbl}</td><td>—</td>`;
-    arr.forEach(v=>{ r+=`<td>${v}</td>`; });
-    return r+`<td style="font-weight:700">${arr[0]}</td></tr>`;
+    let r = `<tr ${hid()}><td>${lbl}</td><td data-col="invest">—</td>`;
+    arr.forEach((v,i)=>{ r+=`<td data-year="${i+1}">${v}</td>`; });
+    return r+`<td data-col="total" style="font-weight:700">${arr[0]}</td></tr>`;
   };
 
   // Collapsible balance row (last value in total col)
   const balRow = (lbl, arr, cls2='') => {
-    let r = `<tr ${hid()}><td>${lbl}</td><td>—</td>`;
-    arr.forEach(v=>{ r+=`<td class="${cls2}">${fn(v)}</td>`; });
-    return r+`<td class="${cls2}" style="font-weight:700">${fn(lastOf(arr))}</td></tr>`;
+    let r = `<tr ${hid()}><td>${lbl}</td><td data-col="invest">—</td>`;
+    arr.forEach((v,i)=>{ r+=`<td data-year="${i+1}" class="${cls2}">${fn(v)}</td>`; });
+    return r+`<td data-col="total" class="${cls2}" style="font-weight:700">${fn(lastOf(arr))}</td></tr>`;
   };
 
   // Always-visible summary row (bold highlight, never hidden)
   const alwaysRow = (lbl, arr, cls2='') => {
     const tot = sumOf(arr);
-    let r = `<tr class="sub-row"><td>${lbl}</td><td>—</td>`;
-    arr.forEach(v=>{ r+=`<td class="${cls2}">${fv(v)}</td>`; });
-    return r+`<td class="${cls2}" style="font-weight:700">${fv(tot)}</td></tr>`;
+    let r = `<tr class="sub-row"><td>${lbl}</td><td data-col="invest">—</td>`;
+    arr.forEach((v,i)=>{ r+=`<td data-year="${i+1}" class="${cls2}">${fv(v)}</td>`; });
+    return r+`<td data-col="total" class="${cls2}" style="font-weight:700">${fv(tot)}</td></tr>`;
   };
 
   // Always-visible balance row (last value in total)
   const alwaysBalRow = (lbl, arr, cls2='') => {
-    let r = `<tr class="sub-row"><td>${lbl}</td><td>—</td>`;
-    arr.forEach(v=>{ r+=`<td class="${cls2}">${fn(v)}</td>`; });
-    return r+`<td class="${cls2}" style="font-weight:700">${fn(lastOf(arr))}</td></tr>`;
+    let r = `<tr class="sub-row"><td>${lbl}</td><td data-col="invest">—</td>`;
+    arr.forEach((v,i)=>{ r+=`<td data-year="${i+1}" class="${cls2}">${fn(v)}</td>`; });
+    return r+`<td data-col="total" class="${cls2}" style="font-weight:700">${fn(lastOf(arr))}</td></tr>`;
   };
 
   // ── 1. PROPERTY PURCHASE ──
@@ -690,18 +836,35 @@ function buildDetailTable(yrs, price, ir, amortPct, rent, hmgmt, tmgmt, afa,
 
   // ── 4. FINANCING ──
   html+=sec('FINANCING', price, financingA, price+sumOf(financingA), 'neg');
-  html+=row('Loan Amount',            price, null,              'pos');
-  html+=row('Interest & Repayment',   null,  financingA,        'neg');
-  html+=row('↳ of which Interest',    null,  intA.map(v=>-v),  'neg', true);
-  html+=row('↳ of which Repayments',  null,  amA.map(v=>-v),   'neg', true);
+  if(isNeubau){
+    html+=row('Bank Loan',               bankLoan, null,                     'pos');
+    html+=row('KfW Loan (Prog. 297/298)',kfwLoan,  null,                     'pos');
+    html+=row('Bank Interest & Repayment', null,   intBankA.map((v,i)=>-(v+amBankA[i])), 'neg');
+    html+=row('↳ Bank Interest',          null,    intBankA.map(v=>-v),      'neg', true);
+    html+=row('↳ Bank Repayments',        null,    amBankA.map(v=>-v),       'neg', true);
+    html+=row('KfW Interest & Repayment', null,    intKfwA.map((v,i)=>-(v+amKfwA[i])), 'neg');
+    html+=row('↳ KfW Interest',           null,    intKfwA.map(v=>-v),       'neg', true);
+    html+=row('↳ KfW Repayments',         null,    amKfwA.map(v=>-v),        'neg', true);
+  } else {
+    html+=row('Loan Amount',              price,   null,                     'pos');
+    html+=row('Interest & Repayment',     null,    financingA,               'neg');
+    html+=row('↳ of which Interest',      null,    intA.map(v=>-v),          'neg', true);
+    html+=row('↳ of which Repayments',    null,    amA.map(v=>-v),           'neg', true);
+  }
   html+=alwaysRow('Net Cash Flow Before Tax', netCFBeforeTaxA, '');
 
   // ── 5. TAX IMPLICATIONS ──
   html+=sec('TAX IMPLICATIONS', null, taxSavA, sumOf(taxSavA), 'pos');
-  html+=row('↳ Add back: Repayments',        null, amA,                   'pos', true);
-  html+=row('↳ AfA Depreciation (§7b EStG)', null, Array(yrs).fill(-afa), 'neg', true);
-  html+=row('Rental Profit / Loss',           null, rentalProfitA,         '');
-  html+=row('Tax Savings',                   null, taxSavA,                'pos');
+  html+=row('↳ Add back: Repayments', null, amA, 'pos', true);
+  if(isNeubau){
+    html+=row('↳ §7b Special AfA (Yrs 1–4)', null, Array(yrs).fill(0).map((_,i)=>i<4?-afa7bAnnual:0), 'neg', true);
+    html+=row('↳ Degressive/Linear AfA',      null, afaYA.map((v,i)=>-(v-(i<4?afa7bAnnual:0))),        'neg', true);
+    html+=row('↳ Total AfA',                  null, afaYA.map(v=>-v),                                   'neg', true);
+  } else {
+    html+=row('↳ AfA Depreciation (§7 EStG)', null, Array(yrs).fill(-afa), 'neg', true);
+  }
+  html+=row('Rental Profit / Loss', null, rentalProfitA, '');
+  html+=row('Tax Savings',          null, taxSavA,        'pos');
   html+=alwaysRow('Net Cash Flow After Tax', netCFAfterTaxA, '');
 
   // ── 6. TAXABLE INCOME ──
@@ -720,7 +883,80 @@ function buildDetailTable(yrs, price, ir, amortPct, rent, hmgmt, tmgmt, afa,
 
   html+='</tbody>';
   G('detail-table').innerHTML=html;
+
+  // Build mobile year picker
+  const bar = G('mob-yr-bar');
+  if(bar){
+    let ph = '';
+    for(let y=1;y<=yrs;y++) ph+=`<button class="mob-yr-btn${y===1?' active':''}" onclick="mobPickYear(${y},${yrs})" id="mob-yr-btn-${y}">Yr ${y}</button>`;
+    bar.innerHTML = ph;
+    if(window.innerWidth <= 900) mobPickYear(1, yrs);
+  }
 }
+
+
+</script>
+
+<script>
+// ── Mobile slider fix: overlay intercepts touch, only updates slider for horizontal gestures ──
+(function(){
+  function setup(){
+    if(window.innerWidth > 900) return;
+    document.querySelectorAll('.sg').forEach(function(sg){
+      if(sg.dataset.mob) return;
+      sg.dataset.mob = '1';
+      var slider = sg.querySelector('input[type=range]');
+      if(!slider) return;
+      slider.style.pointerEvents = 'none'; // overlay handles all touch
+      sg.style.position = 'relative';
+      var ov = document.createElement('div');
+      // Cover slider track only (leave room for number input on the right)
+      ov.style.cssText = 'position:absolute;top:-8px;left:0;right:90px;bottom:-8px;z-index:5;touch-action:pan-y';
+      sg.appendChild(ov);
+      var sx, sy, decided, sliding;
+      ov.addEventListener('touchstart', function(e){
+        sx = e.touches[0].clientX;
+        sy = e.touches[0].clientY;
+        decided = false; sliding = false;
+      }, {passive:true});
+      ov.addEventListener('touchmove', function(e){
+        var dx = e.touches[0].clientX - sx;
+        var dy = e.touches[0].clientY - sy;
+        if(!decided && (Math.abs(dx)>5 || Math.abs(dy)>5)){
+          decided = true;
+          sliding = Math.abs(dx) > Math.abs(dy);
+        }
+        if(sliding){
+          var rect = slider.getBoundingClientRect();
+          var ratio = (e.touches[0].clientX - rect.left) / rect.width;
+          ratio = Math.max(0, Math.min(1, ratio));
+          var mn = parseFloat(slider.min)||0, mx = parseFloat(slider.max)||100, st = parseFloat(slider.step)||1;
+          var val = Math.round((mn + ratio*(mx-mn)) / st) * st;
+          slider.value = Math.max(mn, Math.min(mx, val));
+          slider.dispatchEvent(new Event('input', {bubbles:true}));
+        }
+      }, {passive:true});
+    });
+  }
+  document.addEventListener('DOMContentLoaded', setup);
+})();
+
+window.mobPickYear = function(y){
+  document.querySelectorAll('.mob-yr-btn').forEach(b=>b.classList.remove('active'));
+  const btn = document.getElementById('mob-yr-btn-'+y);
+  if(btn) btn.classList.add('active');
+  document.querySelectorAll('table.dtbl [data-year]').forEach(function(el){
+    el.classList.toggle('myr-on', el.dataset.year == y);
+  });
+};
+
+window.mobTab = function(tab){
+  const isSettings = tab === 'settings';
+  document.getElementById('mob-left').classList.toggle('mob-active', isSettings);
+  document.getElementById('mob-right').classList.toggle('mob-active', !isSettings);
+  document.getElementById('mob-tab-s').className = 'mob-tab-btn' + (isSettings ? ' active' : '');
+  document.getElementById('mob-tab-r').className = 'mob-tab-btn' + (!isSettings ? ' active' : '');
+};
 </script>
 </body>
 </html>
