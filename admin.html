@@ -242,7 +242,8 @@ td:first-child{font-weight:600}
 <div class="modal-backdrop" id="client-modal-backdrop">
   <div class="modal">
     <button class="modal-close" onclick="closeClientModal()" aria-label="Close">✕</button>
-    <h3>Add Client</h3>
+    <h3 id="client-modal-title">Add Client</h3>
+    <input type="hidden" id="client-form-id">
     <div class="field-row"><label>Name</label><input id="client-form-name" placeholder="Müller Family"></div>
     <div class="field-row"><label>Email (Google)</label><input id="client-form-email" placeholder="client@gmail.com"></div>
     <div class="field-row"><label>Assigned Property</label><select id="client-form-property"></select></div>
@@ -252,7 +253,7 @@ td:first-child{font-weight:600}
     </div>
     <div style="display:flex;gap:10px;margin-top:18px;justify-content:flex-end">
       <button class="btn btn-ghost" onclick="closeClientModal()">Cancel</button>
-      <button class="btn btn-gold" onclick="saveClientRecord()">Create Client &amp; Get Link</button>
+      <button class="btn btn-gold" id="client-save-btn" onclick="saveClientRecord()">Create Client &amp; Get Link</button>
     </div>
     <div class="link-box" id="client-result-box" style="display:none">
       <input id="client-result-link" readonly>
@@ -438,7 +439,7 @@ td:first-child{font-weight:600}
         <td>${esc(c.email || '—')}</td>
         <td>${esc(propLabel)}</td>
         <td>${c.savedAt ? new Date(c.savedAt).toLocaleString('de-DE') : '—'}</td>
-        <td><button class="action-link" onclick="copyClientLinkAdmin('${c.id}')">Copy Link</button> <button class="action-link" style="color:var(--red);border-color:rgba(231,76,60,0.3)" onclick="deleteClient('${c.id}')">Delete</button></td>
+        <td><button class="action-link" onclick="editClient('${c.id}')">Edit</button> <button class="action-link" onclick="copyClientLinkAdmin('${c.id}')">Copy Link</button> <button class="action-link" style="color:var(--red);border-color:rgba(231,76,60,0.3)" onclick="deleteClient('${c.id}')">Delete</button></td>
       </tr>`;
     }).join('');
   }
@@ -558,32 +559,61 @@ td:first-child{font-weight:600}
 
   // ── Client modal ──
   window.openClientModal = function () {
+    document.getElementById('client-modal-title').textContent = 'Add Client';
+    document.getElementById('client-save-btn').textContent = 'Create Client & Get Link';
+    document.getElementById('client-form-id').value = '';
     document.getElementById('client-form-name').value = '';
     document.getElementById('client-form-email').value = '';
     document.getElementById('client-form-salary').value = 60000;
+    document.getElementById('client-form-taxclass').value = '1';
     document.getElementById('client-result-box').style.display = 'none';
     document.getElementById('client-modal-backdrop').style.display = 'flex';
   };
   window.closeClientModal = function () { document.getElementById('client-modal-backdrop').style.display = 'none'; };
 
+  window.editClient = function (id) {
+    const c = clients.find(x => x.id === id);
+    if (!c) return;
+    document.getElementById('client-modal-title').textContent = 'Edit Client';
+    document.getElementById('client-save-btn').textContent = 'Save Changes';
+    document.getElementById('client-form-id').value = id;
+    document.getElementById('client-form-name').value = c.name || '';
+    document.getElementById('client-form-email').value = c.email || '';
+    document.getElementById('client-form-property').value = c.assignedPropertyId || '';
+    document.getElementById('client-form-salary').value = c.salary || 60000;
+    document.getElementById('client-form-taxclass').value = c.taxClass || '1';
+    document.getElementById('client-result-box').style.display = 'none';
+    document.getElementById('client-modal-backdrop').style.display = 'flex';
+  };
+
   window.saveClientRecord = async function () {
+    const id = document.getElementById('client-form-id').value;
     const name = document.getElementById('client-form-name').value || 'Unnamed Client';
     const email = document.getElementById('client-form-email').value.trim().toLowerCase();
     const propertyId = document.getElementById('client-form-property').value;
     if (!email || !propertyId) { alert('Email and assigned property are required.'); return; }
-    const assignedProperty = properties.find(p => p.id === propertyId);
-    const data = {
+
+    const baseData = {
       name, email, assignedPropertyId: propertyId,
       salary: Number(document.getElementById('client-form-salary').value),
-      taxClass: document.getElementById('client-form-taxclass').value,
-      renov: Number((assignedProperty && assignedProperty.renov) || 0),
-      kirche: false, appr: 2.0, years: 10, etf: 7.0,
-      createdAt: new Date().toISOString()
+      taxClass: document.getElementById('client-form-taxclass').value
     };
-    const ref = await addDoc(collection(db, 'clients'), data);
-    const url = CALCULATOR_URL + '?client=' + ref.id;
-    document.getElementById('client-result-link').value = url;
-    document.getElementById('client-result-box').style.display = 'flex';
+
+    if (id) {
+      // Update only the admin-controlled fields - leaves the client's own personal
+      // preferences (renov, kirche, appr, years, etf) untouched.
+      baseData.updatedAt = new Date().toISOString();
+      await updateDoc(doc(db, 'clients', id), baseData);
+    } else {
+      const assignedProperty = properties.find(p => p.id === propertyId);
+      baseData.renov = Number((assignedProperty && assignedProperty.renov) || 0);
+      baseData.kirche = false; baseData.appr = 2.0; baseData.years = 10; baseData.etf = 7.0;
+      baseData.createdAt = new Date().toISOString();
+      const ref = await addDoc(collection(db, 'clients'), baseData);
+      const url = CALCULATOR_URL + '?client=' + ref.id;
+      document.getElementById('client-result-link').value = url;
+      document.getElementById('client-result-box').style.display = 'flex';
+    }
     await refreshAll();
   };
 
