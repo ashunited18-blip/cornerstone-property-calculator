@@ -522,12 +522,30 @@ td:first-child{font-weight:600}
 
   window.saveProperty = async function () {
     const id = document.getElementById('prop-id').value;
+    const status = document.getElementById('prop-status').value;
+
+    if (id && (status === 'reserved' || status === 'sold')) {
+      const assignedCount = clients.filter(c => c.assignedPropertyId === id).length;
+      if (assignedCount > 1) {
+        const proceed = confirm(
+          'This property has ' + assignedCount + ' clients assigned, but a ' + status +
+          ' property should normally have only one. Continue anyway?'
+        );
+        if (!proceed) return;
+      } else if (assignedCount === 0) {
+        const proceed = confirm(
+          'Marking this property as ' + status + ', but no client is assigned to it yet. Continue anyway?'
+        );
+        if (!proceed) return;
+      }
+    }
+
     const data = {
       photos: currentPhotos,
       address: document.getElementById('prop-address').value,
       city: document.getElementById('prop-city').value,
       buildYear: document.getElementById('prop-buildYear').value,
-      status: document.getElementById('prop-status').value,
+      status: status,
       mode: document.getElementById('prop-mode').value,
       price: Number(document.getElementById('prop-price').value),
       rent: Number(document.getElementById('prop-rent').value),
@@ -593,6 +611,19 @@ td:first-child{font-weight:600}
     const propertyId = document.getElementById('client-form-property').value;
     if (!email || !propertyId) { alert('Email and assigned property are required.'); return; }
 
+    const assignedProperty = properties.find(p => p.id === propertyId);
+    if (assignedProperty && (assignedProperty.status === 'reserved' || assignedProperty.status === 'sold')) {
+      const otherClients = clients.filter(c => c.assignedPropertyId === propertyId && c.id !== id);
+      if (otherClients.length > 0) {
+        const proceed = confirm(
+          'This property is marked ' + assignedProperty.status + ' and already has ' +
+          otherClients.map(c => c.name).join(', ') + ' assigned. A ' + assignedProperty.status +
+          ' property should normally have only one client. Continue anyway?'
+        );
+        if (!proceed) return;
+      }
+    }
+
     const baseData = {
       name, email, assignedPropertyId: propertyId,
       salary: Number(document.getElementById('client-form-salary').value),
@@ -606,7 +637,6 @@ td:first-child{font-weight:600}
       await updateDoc(doc(db, 'clients', id), baseData);
       closeClientModal();
     } else {
-      const assignedProperty = properties.find(p => p.id === propertyId);
       baseData.renov = Number((assignedProperty && assignedProperty.renov) || 0);
       baseData.kirche = false; baseData.appr = 2.0; baseData.years = 10; baseData.etf = 7.0;
       baseData.createdAt = new Date().toISOString();
