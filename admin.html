@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cornerstone Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy:#070d1f; --navy2:#0f1830; --card:#101c3a;
+  --gold:#d4af6a; --gold-bright:#f0cf86; --gold-dim:#b89254; --gold2:rgba(212,175,106,0.15);
+  --green:#7fc69a; --red:#E74C3C; --blue:#3498DB;
+  --text:#fff; --dim:#8fa3c0; --border:rgba(212,175,106,0.22);
+  --ease-out:cubic-bezier(0.23,1,0.32,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--navy);color:var(--text);font-family:'Inter',system-ui,sans-serif;min-height:100vh}
+.header{background:linear-gradient(135deg,#070d1f,#0f1a3a);border-bottom:1px solid var(--border);padding:16px 24px;display:flex;align-items:center;justify-content:space-between}
+.header h1{font-family:'Cinzel',serif;font-size:1.2rem;font-weight:600;letter-spacing:.03em;color:var(--gold-bright)}
+.header p{font-size:0.75rem;color:var(--dim);margin-top:2px}
+.header-right{display:flex;align-items:center;gap:14px}
+.header-right .email{font-size:0.78rem;color:var(--dim)}
+.btn{padding:8px 16px;border-radius:6px;font-size:0.78rem;font-weight:600;cursor:pointer;border:none;transition:background-color 180ms var(--ease-out),transform 120ms var(--ease-out)}
+.btn:active{transform:scale(0.96)}
+.btn-gold{background:var(--gold);color:var(--navy)}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--dim)}
+.wrap{max-width:1100px;margin:0 auto;padding:28px 24px}
+.section-title{font-family:'Cinzel',serif;font-size:1rem;font-weight:600;color:var(--gold-bright);margin-bottom:4px}
+.section-sub{font-size:0.78rem;color:var(--dim);margin-bottom:20px}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;transition:transform 200ms var(--ease-out)}
+.stat-card .sv{font-size:1.5rem;font-weight:700}
+.stat-card .sl{font-size:0.68rem;color:var(--dim);margin-top:3px;text-transform:uppercase;letter-spacing:.05em}
+table{width:100%;border-collapse:collapse;font-size:0.8rem;margin-bottom:30px}
+th{text-align:left;color:var(--dim);font-weight:600;padding:9px 12px;border-bottom:1px solid var(--border);font-size:0.7rem;text-transform:uppercase;letter-spacing:.05em}
+td{padding:11px 12px;border-bottom:1px solid rgba(255,255,255,.04);transition:background-color 150ms var(--ease-out)}
+tr:hover td{background:rgba(212,175,106,.04)}
+td:first-child{font-weight:600}
+.status{display:inline-block;padding:3px 10px;border-radius:20px;font-size:0.68rem;font-weight:600}
+.status.available{background:rgba(127,198,154,0.15);color:var(--green)}
+.status.reserved{background:rgba(212,175,106,0.15);color:var(--gold)}
+.status.sold{background:rgba(231,76,60,0.15);color:var(--red)}
+.action-link{background:rgba(212,175,106,0.1);border:1px solid var(--border);color:var(--gold);padding:4px 10px;border-radius:5px;font-size:0.7rem;cursor:pointer;transition:border-color 150ms var(--ease-out)}
+.action-link:hover{border-color:var(--gold)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:20px}
+.card h3{font-family:'Cinzel',serif;font-size:0.78rem;color:var(--gold-bright);text-transform:uppercase;letter-spacing:.06em;margin-bottom:16px;font-weight:600}
+.field-row{display:grid;grid-template-columns:160px 1fr;align-items:center;gap:10px;margin-bottom:10px}
+.field-row label{font-size:0.76rem;color:var(--dim)}
+.field-row input,.field-row select{background:rgba(255,255,255,.07);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:0.8rem;padding:7px 10px;outline:none;transition:border-color 150ms var(--ease-out)}
+.field-row input:focus,.field-row select:focus{border-color:var(--gold)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.modal-backdrop{display:none;position:fixed;inset:0;background:rgba(7,13,31,.8);z-index:1000;align-items:center;justify-content:center;padding:20px}
+.modal{background:var(--navy2);border:1px solid var(--border);border-radius:12px;padding:28px;max-width:520px;width:100%;max-height:88vh;overflow-y:auto}
+.modal h3{font-family:'Cinzel',serif;color:var(--gold-bright);font-size:0.95rem;margin-bottom:18px}
+.link-box{display:flex;align-items:center;gap:8px;background:rgba(212,175,106,.08);border:1px solid var(--border);border-radius:6px;padding:8px 10px;margin-top:14px}
+.link-box input{flex:1;background:transparent;border:none;color:var(--gold-bright);font-size:0.74rem;outline:none}
+.login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#070d1f,#0f1a3a)}
+.login-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:44px 38px;max-width:380px;width:90%;text-align:center}
+.login-card .logo{font-family:'Cinzel',serif;color:var(--gold-bright);font-size:1.05rem;font-weight:600;margin-bottom:8px}
+.login-card .sub{color:var(--dim);font-size:0.78rem;margin-bottom:30px}
+.google-btn{background:#fff;color:#333;border:none;border-radius:8px;padding:13px 20px;width:100%;display:flex;align-items:center;justify-content:center;gap:10px;font-size:0.88rem;font-weight:600;cursor:pointer}
+.error-msg{color:var(--red);font-size:0.75rem;margin-top:16px}
+</style>
+</head>
+<body>
+
+<div id="login-screen" class="login-screen">
+  <div class="login-card">
+    <div class="logo">CORNERSTONE ADMIN</div>
+    <div class="sub">Sign in with an authorised Google account</div>
+    <button id="btn-admin-signin" class="google-btn">
+      <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84c-.21 1.13-.85 2.08-1.81 2.72v2.26h2.92c1.71-1.57 2.69-3.89 2.69-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.81 5.96-2.18l-2.92-2.26c-.81.54-1.84.87-3.04.87-2.34 0-4.32-1.58-5.03-3.71H.96v2.33C2.44 15.98 5.48 18 9 18z"/><path fill="#FBBC05" d="M3.97 10.72c-.18-.54-.28-1.12-.28-1.72s.1-1.18.28-1.72V4.95H.96A8.996 8.996 0 0 0 0 9c0 1.45.35 2.82.96 4.05l3.01-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0 5.48 0 2.44 2.02.96 4.95l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z"/></svg>
+      Continue with Google
+    </button>
+    <div id="login-error" class="error-msg" style="display:none"></div>
+  </div>
+</div>
+
+<div id="admin-app" style="display:none">
+  <div class="header">
+    <div>
+      <h1>Cornerstone Admin</h1>
+      <p>Property &amp; client management</p>
+    </div>
+    <div class="header-right">
+      <span class="email" id="admin-email"></span>
+      <button class="btn btn-ghost" onclick="adminSignOut()">Sign out</button>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="stats-row" id="stats-row">
+      <div class="stat-card"><div class="sv" id="st-total">—</div><div class="sl">Total Listed</div></div>
+      <div class="stat-card"><div class="sv" id="st-available" style="color:var(--green)">—</div><div class="sl">Available</div></div>
+      <div class="stat-card"><div class="sv" id="st-reserved" style="color:var(--gold)">—</div><div class="sl">Reserved</div></div>
+      <div class="stat-card"><div class="sv" id="st-sold" style="color:var(--red)">—</div><div class="sl">Sold</div></div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <div class="section-title">Properties</div>
+      <button class="btn btn-gold" onclick="openPropertyModal()">+ Add Property</button>
+    </div>
+    <div class="section-sub">All listed properties and their assigned clients</div>
+    <table>
+      <thead><tr><th>Property</th><th>City</th><th>Price</th><th>Rent/mo</th><th>Status</th><th>Clients</th><th></th></tr></thead>
+      <tbody id="properties-tbody"><tr><td colspan="7" style="color:var(--dim)">Loading…</td></tr></tbody>
+    </table>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <div class="section-title">Clients</div>
+      <button class="btn btn-gold" onclick="openClientModal()">+ Add Client</button>
+    </div>
+    <div class="section-sub">Invitation-only access — each client is bound to one Google account</div>
+    <table>
+      <thead><tr><th>Name</th><th>Email</th><th>Assigned Property</th><th>Last Saved</th><th></th></tr></thead>
+      <tbody id="clients-tbody"><tr><td colspan="5" style="color:var(--dim)">Loading…</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Property Modal -->
+<div class="modal-backdrop" id="property-modal-backdrop">
+  <div class="modal">
+    <h3 id="property-modal-title">Add Property</h3>
+    <input type="hidden" id="prop-id">
+    <div class="grid2">
+      <div>
+        <div class="field-row"><label>Address</label><input id="prop-address" placeholder="Asamstrasse WE3"></div>
+        <div class="field-row"><label>City</label><input id="prop-city" placeholder="Ingolstadt"></div>
+        <div class="field-row"><label>Build Year</label><input id="prop-buildYear" placeholder="1934"></div>
+        <div class="field-row"><label>Status</label>
+          <select id="prop-status"><option value="available">Available</option><option value="reserved">Reserved</option><option value="sold">Sold</option></select>
+        </div>
+        <div class="field-row"><label>Mode</label>
+          <select id="prop-mode"><option value="altbau">Altbau</option><option value="neubau">Neubau</option></select>
+        </div>
+        <div class="field-row"><label>Purchase Price (€)</label><input id="prop-price" type="number" value="335000"></div>
+        <div class="field-row"><label>Cold Rent (€/mo)</label><input id="prop-rent" type="number" value="1080"></div>
+        <div class="field-row"><label>Building Portion (%)</label><input id="prop-build" type="number" value="80"></div>
+        <div class="field-row"><label>Area (m²)</label><input id="prop-area" type="number" value="63"></div>
+      </div>
+      <div>
+        <div class="field-row"><label>Transfer Tax (%)</label><input id="prop-ttax" type="number" value="4.0" step="0.1"></div>
+        <div class="field-row"><label>Notary (%)</label><input id="prop-notary" type="number" value="1.5" step="0.1"></div>
+        <div class="field-row"><label>Brokerage (%)</label><input id="prop-broker" type="number" value="0" step="0.1"></div>
+        <div class="field-row"><label>Bank Financing (%)</label><input id="prop-fin" type="number" value="100"></div>
+        <div class="field-row"><label>Interest Rate (%)</label><input id="prop-ir" type="number" value="4.5" step="0.1"></div>
+        <div class="field-row"><label>Amortization (%)</label><input id="prop-amort" type="number" value="1.0" step="0.1"></div>
+        <div class="field-row"><label>AfA Rate (%)</label><input id="prop-afa" type="number" value="2.0" step="0.1"></div>
+        <div class="field-row"><label>House Mgmt (€/yr)</label><input id="prop-hmgmt" type="number" value="360"></div>
+        <div class="field-row"><label>Tenant Mgmt (€/yr)</label><input id="prop-tmgmt" type="number" value="600"></div>
+        <div class="field-row"><label>Renovation (€)</label><input id="prop-renov" type="number" value="0"></div>
+        <div class="field-row"><label>KfW Loan (€)</label><input id="prop-kfw" type="number" value="0"></div>
+        <div class="field-row"><label>KfW Rate (%)</label><input id="prop-kfw-ir" type="number" value="2.5" step="0.1"></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:18px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closePropertyModal()">Cancel</button>
+      <button class="btn btn-gold" onclick="saveProperty()">Save Property</button>
+    </div>
+  </div>
+</div>
+
+<!-- Client Modal -->
+<div class="modal-backdrop" id="client-modal-backdrop">
+  <div class="modal">
+    <h3>Add Client</h3>
+    <div class="field-row"><label>Name</label><input id="client-form-name" placeholder="Müller Family"></div>
+    <div class="field-row"><label>Email (Google)</label><input id="client-form-email" placeholder="client@gmail.com"></div>
+    <div class="field-row"><label>Assigned Property</label><select id="client-form-property"></select></div>
+    <div class="field-row"><label>Annual Salary (€)</label><input id="client-form-salary" type="number" value="60000"></div>
+    <div class="field-row"><label>Tax Class</label>
+      <select id="client-form-taxclass"><option value="1">Class 1</option><option value="3">Class 3</option><option value="4">Class 4</option></select>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:18px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeClientModal()">Cancel</button>
+      <button class="btn btn-gold" onclick="saveClientRecord()">Create Client &amp; Get Link</button>
+    </div>
+    <div class="link-box" id="client-result-box" style="display:none">
+      <input id="client-result-link" readonly>
+      <button class="btn btn-ghost" onclick="copyResultLink()">Copy</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query }
+    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut }
+    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDsIOcurloVs2Nn8eYWocjo480bCtKieVQ",
+    authDomain: "cornerstone-calculator.firebaseapp.com",
+    projectId: "cornerstone-calculator",
+    storageBucket: "cornerstone-calculator.firebasestorage.app",
+    messagingSenderId: "55250791192",
+    appId: "1:55250791192:web:5df5db4602f19d8be08c6d",
+    measurementId: "G-8VFJDDYHM1"
+  };
+  const ADMIN_EMAILS = ['ashunited18@gmail.com', 'adityasunil2010@gmail.com'];
+  const CALCULATOR_URL = location.origin + '/'; // property_calculator.html is served as index.html
+
+  const app  = initializeApp(firebaseConfig);
+  const db   = getFirestore(app);
+  const auth = getAuth(app);
+
+  let properties = [], clients = [];
+
+  document.getElementById('btn-admin-signin').onclick = () => {
+    signInWithPopup(auth, new GoogleAuthProvider()).catch(e => {
+      const err = document.getElementById('login-error');
+      err.textContent = e.message; err.style.display = 'block';
+    });
+  };
+  window.adminSignOut = () => signOut(auth);
+
+  onAuthStateChanged(auth, async (user) => {
+    const userEmail = (user && user.email || '').toLowerCase();
+    const isAuthorisedAdmin = !!user && ADMIN_EMAILS.map(e => e.toLowerCase()).includes(userEmail);
+    if (!isAuthorisedAdmin) {
+      document.getElementById('login-screen').style.display = 'flex';
+      document.getElementById('admin-app').style.display = 'none';
+      if (user) {
+        const err = document.getElementById('login-error');
+        err.textContent = 'This Google account is not authorised for admin access.';
+        err.style.display = 'block';
+        await signOut(auth);
+      }
+      return;
+    }
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('admin-app').style.display = 'block';
+    document.getElementById('admin-email').textContent = user.email;
+    await refreshAll();
+  });
+
+  async function refreshAll() {
+    const propSnap = await getDocs(query(collection(db, 'properties')));
+    properties = propSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const clientSnap = await getDocs(query(collection(db, 'clients')));
+    clients = clientSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderStats();
+    renderProperties();
+    renderClients();
+    renderPropertyDropdown();
+  }
+
+  function renderStats() {
+    document.getElementById('st-total').textContent = properties.length;
+    document.getElementById('st-available').textContent = properties.filter(p => p.status === 'available').length;
+    document.getElementById('st-reserved').textContent = properties.filter(p => p.status === 'reserved').length;
+    document.getElementById('st-sold').textContent = properties.filter(p => p.status === 'sold').length;
+  }
+
+  function renderProperties() {
+    const tbody = document.getElementById('properties-tbody');
+    if (!properties.length) { tbody.innerHTML = '<tr><td colspan="7" style="color:var(--dim)">No properties yet.</td></tr>'; return; }
+    tbody.innerHTML = properties.map(p => {
+      const assignedClients = clients.filter(c => c.assignedPropertyId === p.id);
+      const names = assignedClients.length ? assignedClients.map(c => c.name).join(', ') : '—';
+      return `<tr>
+        <td>${esc(p.address || '—')}</td>
+        <td>${esc(p.city || '—')}</td>
+        <td>€${Number(p.price || 0).toLocaleString('de-DE')}</td>
+        <td>€${Number(p.rent || 0).toLocaleString('de-DE')}</td>
+        <td><span class="status ${p.status || 'available'}">${p.status || 'available'}</span></td>
+        <td>${esc(names)}</td>
+        <td><button class="action-link" onclick="editProperty('${p.id}')">Edit</button></td>
+      </tr>`;
+    }).join('');
+  }
+
+  function renderClients() {
+    const tbody = document.getElementById('clients-tbody');
+    if (!clients.length) { tbody.innerHTML = '<tr><td colspan="5" style="color:var(--dim)">No clients yet.</td></tr>'; return; }
+    tbody.innerHTML = clients.map(c => {
+      const prop = properties.find(p => p.id === c.assignedPropertyId);
+      const propLabel = prop ? (prop.address + ', ' + prop.city) : '—';
+      return `<tr>
+        <td>${esc(c.name || '—')}</td>
+        <td>${esc(c.email || '—')}</td>
+        <td>${esc(propLabel)}</td>
+        <td>${c.savedAt ? new Date(c.savedAt).toLocaleString('de-DE') : '—'}</td>
+        <td><button class="action-link" onclick="copyClientLinkAdmin('${c.id}')">Copy Link</button></td>
+      </tr>`;
+    }).join('');
+  }
+
+  function renderPropertyDropdown() {
+    const sel = document.getElementById('client-form-property');
+    sel.innerHTML = properties.map(p => `<option value="${p.id}">${esc(p.address)}, ${esc(p.city)}</option>`).join('');
+  }
+
+  function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  // ── Property modal ──
+  window.openPropertyModal = function () {
+    document.getElementById('property-modal-title').textContent = 'Add Property';
+    document.getElementById('prop-id').value = '';
+    ['address','city','buildYear'].forEach(f => document.getElementById('prop-' + f).value = '');
+    document.getElementById('prop-status').value = 'available';
+    document.getElementById('prop-mode').value = 'altbau';
+    document.getElementById('property-modal-backdrop').style.display = 'flex';
+  };
+  window.closePropertyModal = function () { document.getElementById('property-modal-backdrop').style.display = 'none'; };
+
+  window.editProperty = function (id) {
+    const p = properties.find(x => x.id === id);
+    if (!p) return;
+    document.getElementById('property-modal-title').textContent = 'Edit Property';
+    document.getElementById('prop-id').value = id;
+    const fields = ['address','city','buildYear','status','mode','price','rent','build','area','ttax','notary','broker','fin','ir','amort','afa','hmgmt','tmgmt','renov','kfw'];
+    fields.forEach(f => { const el = document.getElementById('prop-' + f); if (el && p[f] !== undefined) el.value = p[f]; });
+    if (p['kfw-ir'] !== undefined) document.getElementById('prop-kfw-ir').value = p['kfw-ir'];
+    document.getElementById('property-modal-backdrop').style.display = 'flex';
+  };
+
+  window.saveProperty = async function () {
+    const id = document.getElementById('prop-id').value;
+    const data = {
+      address: document.getElementById('prop-address').value,
+      city: document.getElementById('prop-city').value,
+      buildYear: document.getElementById('prop-buildYear').value,
+      status: document.getElementById('prop-status').value,
+      mode: document.getElementById('prop-mode').value,
+      price: Number(document.getElementById('prop-price').value),
+      rent: Number(document.getElementById('prop-rent').value),
+      build: Number(document.getElementById('prop-build').value),
+      area: Number(document.getElementById('prop-area').value),
+      ttax: Number(document.getElementById('prop-ttax').value),
+      notary: Number(document.getElementById('prop-notary').value),
+      broker: Number(document.getElementById('prop-broker').value),
+      fin: Number(document.getElementById('prop-fin').value),
+      ir: Number(document.getElementById('prop-ir').value),
+      amort: Number(document.getElementById('prop-amort').value),
+      afa: Number(document.getElementById('prop-afa').value),
+      hmgmt: Number(document.getElementById('prop-hmgmt').value),
+      tmgmt: Number(document.getElementById('prop-tmgmt').value),
+      renov: Number(document.getElementById('prop-renov').value),
+      kfw: Number(document.getElementById('prop-kfw').value),
+      'kfw-ir': Number(document.getElementById('prop-kfw-ir').value),
+      updatedAt: new Date().toISOString()
+    };
+    if (id) {
+      await updateDoc(doc(db, 'properties', id), data);
+    } else {
+      data.createdAt = new Date().toISOString();
+      await addDoc(collection(db, 'properties'), data);
+    }
+    closePropertyModal();
+    await refreshAll();
+  };
+
+  // ── Client modal ──
+  window.openClientModal = function () {
+    document.getElementById('client-form-name').value = '';
+    document.getElementById('client-form-email').value = '';
+    document.getElementById('client-form-salary').value = 60000;
+    document.getElementById('client-result-box').style.display = 'none';
+    document.getElementById('client-modal-backdrop').style.display = 'flex';
+  };
+  window.closeClientModal = function () { document.getElementById('client-modal-backdrop').style.display = 'none'; };
+
+  window.saveClientRecord = async function () {
+    const name = document.getElementById('client-form-name').value || 'Unnamed Client';
+    const email = document.getElementById('client-form-email').value.trim().toLowerCase();
+    const propertyId = document.getElementById('client-form-property').value;
+    if (!email || !propertyId) { alert('Email and assigned property are required.'); return; }
+    const data = {
+      name, email, assignedPropertyId: propertyId,
+      salary: Number(document.getElementById('client-form-salary').value),
+      taxClass: document.getElementById('client-form-taxclass').value,
+      kirche: false, appr: 2.0, years: 10, etf: 7.0,
+      createdAt: new Date().toISOString()
+    };
+    const ref = await addDoc(collection(db, 'clients'), data);
+    const url = CALCULATOR_URL + '?client=' + ref.id;
+    document.getElementById('client-result-link').value = url;
+    document.getElementById('client-result-box').style.display = 'flex';
+    await refreshAll();
+  };
+
+  window.copyClientLinkAdmin = function (id) {
+    const url = CALCULATOR_URL + '?client=' + id;
+    navigator.clipboard.writeText(url).catch(() => {});
+    alert('Link copied:\n' + url);
+  };
+  window.copyResultLink = function () {
+    const inp = document.getElementById('client-result-link');
+    inp.select();
+    navigator.clipboard.writeText(inp.value).catch(() => {});
+  };
+</script>
+</body>
+</html>
