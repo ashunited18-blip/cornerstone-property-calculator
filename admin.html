@@ -604,6 +604,7 @@ td:first-child{font-weight:600}
       // preferences (renov, kirche, appr, years, etf) untouched.
       baseData.updatedAt = new Date().toISOString();
       await updateDoc(doc(db, 'clients', id), baseData);
+      closeClientModal();
     } else {
       const assignedProperty = properties.find(p => p.id === propertyId);
       baseData.renov = Number((assignedProperty && assignedProperty.renov) || 0);
