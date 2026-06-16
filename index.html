@@ -13,53 +13,60 @@
   gtag('config', 'G-S0HSENE9GE');
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
-  --navy:#0D1230; --navy2:#162040; --card:#1a2850;
-  --gold:#C9A84C; --gold2:rgba(201,168,76,0.15);
-  --green:#27AE60; --red:#E74C3C; --blue:#3498DB;
-  --text:#fff; --dim:#8fa3c0; --border:rgba(201,168,76,0.2);
+  --navy:#070d1f; --navy2:#0f1830; --card:#101c3a;
+  --gold:#d4af6a; --gold-bright:#f0cf86; --gold-dim:#b89254; --gold2:rgba(212,175,106,0.15);
+  --green:#7fc69a; --red:#E74C3C; --blue:#3498DB;
+  --text:#fff; --dim:#8fa3c0; --border:rgba(212,175,106,0.22);
+  --ease-out:cubic-bezier(0.23,1,0.32,1); --ease-in-out:cubic-bezier(0.77,0,0.175,1);
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--navy);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
-.header{background:linear-gradient(135deg,#0D1230,#1a2547);border-bottom:1px solid var(--border);padding:16px 24px;display:flex;align-items:center;gap:12px}
-.header h1{font-size:1.3rem;font-weight:700;color:var(--gold)}
+body{background:var(--navy);color:var(--text);font-family:'Inter',system-ui,sans-serif;min-height:100vh}
+.header{background:linear-gradient(135deg,#070d1f,#0f1a3a);border-bottom:1px solid var(--border);padding:16px 24px;display:flex;align-items:center;gap:12px}
+.header h1{font-family:'Cinzel',serif;font-size:1.25rem;font-weight:600;letter-spacing:.03em;color:var(--gold-bright)}
 .header p{font-size:0.78rem;color:var(--dim);margin-top:2px}
 .main{display:grid;grid-template-columns:370px 1fr;height:calc(100vh - 68px)}
 .left{background:var(--navy2);border-right:1px solid var(--border);overflow-y:auto;padding:16px}
 .right{overflow-y:auto;padding:16px}
 .sec{margin-bottom:20px}
-.sec-title{font-size:0.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.sec-title{font-family:'Cinzel',serif;font-size:0.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--gold-bright);margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--border)}
 .row{margin-bottom:13px}
 .lbl{display:flex;justify-content:space-between;margin-bottom:5px;font-size:0.78rem;color:var(--dim)}
 .lbl .val{color:var(--gold);font-weight:700}
 .sg{display:flex;align-items:center;gap:8px}
 input[type=range]{-webkit-appearance:none;flex:1;height:4px;background:rgba(255,255,255,.1);border-radius:4px;outline:none;cursor:pointer}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;background:var(--gold);cursor:pointer;box-shadow:0 0 6px rgba(201,168,76,.5)}
-input[type=number]{width:78px;background:rgba(255,255,255,.07);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:0.78rem;padding:4px 7px;text-align:right;outline:none}
-input[type=number]:focus{border-color:var(--gold)}
-select{width:100%;background:rgba(255,255,255,.07);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:0.78rem;padding:6px 9px;outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;background:var(--gold);cursor:pointer;box-shadow:0 0 6px rgba(212,175,106,.5);transition:transform 150ms var(--ease-out)}
+input[type=range]:active::-webkit-slider-thumb{transform:scale(1.25)}
+input[type=number]{width:78px;background:rgba(255,255,255,.07);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:0.78rem;padding:4px 7px;text-align:right;outline:none;transition:border-color 150ms var(--ease-out),background-color 150ms var(--ease-out)}
+input[type=number]:focus{border-color:var(--gold);background-color:rgba(255,255,255,.1)}
+select{width:100%;background:rgba(255,255,255,.07);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:0.78rem;padding:6px 9px;outline:none;cursor:pointer;transition:border-color 150ms var(--ease-out)}
+select:focus,select:hover{border-color:var(--gold-dim)}
 select option{background:var(--card)}
 .trow{display:flex;align-items:center;justify-content:space-between;padding:5px 0}
 .trow span{font-size:0.78rem;color:var(--dim)}
 .tog{position:relative;width:38px;height:20px}
 .tog input{display:none}
-.ts{position:absolute;inset:0;background:rgba(255,255,255,.1);border-radius:20px;cursor:pointer;transition:.3s}
-.ts:before{content:'';position:absolute;width:14px;height:14px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.3s}
+.ts{position:absolute;inset:0;background:rgba(255,255,255,.1);border-radius:20px;cursor:pointer;transition:background-color 200ms var(--ease-out)}
+.ts:before{content:'';position:absolute;width:14px;height:14px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform 200ms var(--ease-out)}
 .tog input:checked+.ts{background:var(--gold)}
 .tog input:checked+.ts:before{transform:translateX(18px)}
 .kgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
-.kcard{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center}
+.kcard{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;transition:transform 200ms var(--ease-out),border-color 200ms var(--ease-out),box-shadow 200ms var(--ease-out)}
+@media(hover:hover) and (pointer:fine){
+  .kcard:hover{transform:translateY(-2px);border-color:var(--gold-dim);box-shadow:0 6px 16px rgba(0,0,0,0.25)}
+}
 .kcard .kl{font-size:0.65rem;color:var(--dim);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px}
-.kcard .kv{font-size:1.25rem;font-weight:700}
+.kcard .kv{font-size:1.25rem;font-weight:700;transition:opacity 150ms var(--ease-out)}
 .kcard .ks{font-size:0.65rem;color:var(--dim);margin-top:3px}
 .pos{color:var(--green)}.neg{color:var(--red)}.gld{color:var(--gold)}.blu{color:var(--blue)}
-.ccrd{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:14px}
-.ctitle{font-size:0.82rem;font-weight:700;margin-bottom:3px}
+.ccrd{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:14px;transition:border-color 200ms var(--ease-out)}
+.ctitle{font-family:'Cinzel',serif;font-size:0.84rem;font-weight:600;letter-spacing:.02em;color:var(--gold-bright);margin-bottom:3px}
 .csub{font-size:0.72rem;color:var(--dim);margin-bottom:14px}
 .dgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .dcrd{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px}
-.dtitle{font-size:0.68rem;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px}
+.dtitle{font-family:'Cinzel',serif;font-size:0.7rem;font-weight:600;color:var(--gold-bright);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
 .dr{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:0.78rem}
 .dr:last-child{border:none}
 .dr .k{color:var(--dim)}.dr .v{font-weight:600}
@@ -80,10 +87,12 @@ select option{background:var(--card)}
 }
 .mob-yr-bar{display:none;overflow-x:auto;gap:6px;padding:6px 2px 10px;scrollbar-width:none}
 .mob-yr-bar::-webkit-scrollbar{display:none}
-.mob-yr-btn{flex-shrink:0;padding:5px 13px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--dim);font-size:0.72rem;cursor:pointer;white-space:nowrap;transition:.15s}
+.mob-yr-btn{flex-shrink:0;padding:9px 14px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--dim);font-size:0.72rem;cursor:pointer;white-space:nowrap;transition:background-color 150ms var(--ease-out),color 150ms var(--ease-out),border-color 150ms var(--ease-out),transform 120ms var(--ease-out)}
+.mob-yr-btn:active{transform:scale(0.95)}
 .mob-yr-btn.active{background:var(--gold);color:#000;border-color:var(--gold);font-weight:700}
 .mob-tabs{display:none;background:var(--navy2);border-bottom:1px solid var(--border);padding:8px 14px;gap:8px;flex-shrink:0}
-.mob-tab-btn{flex:1;padding:11px;border-radius:8px;font-size:0.82rem;font-weight:600;cursor:pointer;transition:.2s;border:1px solid var(--border)}
+.mob-tab-btn{flex:1;padding:11px;border-radius:8px;font-size:0.82rem;font-weight:600;cursor:pointer;transition:background-color 180ms var(--ease-out),color 180ms var(--ease-out),border-color 180ms var(--ease-out),transform 120ms var(--ease-out);border:1px solid var(--border)}
+.mob-tab-btn:active{transform:scale(0.96)}
 .mob-tab-btn.active{background:var(--gold);color:var(--navy);font-weight:700;border-color:var(--gold)}
 .mob-tab-btn:not(.active){background:transparent;color:var(--dim)}
 @media(max-width:900px){
@@ -93,16 +102,21 @@ select option{background:var(--card)}
   .left.mob-active,.right.mob-active{display:block}
 }
 .tabs{display:flex;gap:6px;margin-bottom:14px}
-.tab-btn{padding:7px 20px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--dim);font-size:0.78rem;font-weight:600;cursor:pointer;transition:.2s}
+.tab-btn{padding:7px 20px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--dim);font-size:0.78rem;font-weight:600;cursor:pointer;transition:background-color 180ms var(--ease-out),color 180ms var(--ease-out),border-color 180ms var(--ease-out),transform 120ms var(--ease-out)}
+.tab-btn:active{transform:scale(0.96)}
+@media(hover:hover) and (pointer:fine){
+  .tab-btn:not(.active):hover{border-color:var(--gold-dim);color:var(--gold-bright)}
+}
 .tab-btn.active{background:var(--gold);color:#000;border-color:var(--gold)}
 .tbl-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border)}
 table.dtbl{width:100%;border-collapse:collapse;font-size:0.74rem;white-space:nowrap}
-table.dtbl th{background:var(--navy2);color:var(--gold);font-weight:700;padding:8px 12px;text-align:right;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:2}
+table.dtbl th{background:var(--navy2);color:var(--gold-bright);font-weight:700;padding:8px 12px;text-align:right;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:2}
 table.dtbl th:first-child{text-align:left;position:sticky;left:0;z-index:3;background:var(--navy2)}
-table.dtbl td{padding:6px 12px;text-align:right;border-bottom:1px solid rgba(255,255,255,.03);border-left:1px solid rgba(201,168,76,0.08);color:var(--dim)}
+table.dtbl td{padding:6px 12px;text-align:right;border-bottom:1px solid rgba(255,255,255,.03);border-left:1px solid rgba(212,175,106,0.08);color:var(--dim)}
 table.dtbl td:first-child{text-align:left;position:sticky;left:0;background:var(--card);color:var(--text);font-weight:500;z-index:1;min-width:180px;border-left:none}
-table.dtbl tr:hover td{background:rgba(201,168,76,.05)}
-table.dtbl tr:hover td:first-child{background:rgba(201,168,76,.1)}
+table.dtbl td{transition:background-color 150ms var(--ease-out)}
+table.dtbl tr:hover td{background:rgba(212,175,106,.05)}
+table.dtbl tr:hover td:first-child{background:rgba(212,175,106,.1)}
 table.dtbl .sec-row td{background:var(--navy2);color:var(--gold);font-size:0.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:10px 12px}
 table.dtbl .sec-row td:first-child{background:var(--navy2)}
 table.dtbl .sub-row td{color:var(--text);font-weight:700;border-top:1px solid var(--border)}
@@ -143,8 +157,8 @@ table.dtbl .blu{color:var(--blue)}
 
   <!-- Mode Toggle -->
   <div style="display:flex;gap:0;margin-bottom:16px;border:1px solid var(--border);border-radius:8px;overflow:hidden">
-    <button id="btn-altbau" onclick="setMode('altbau')" style="flex:1;padding:9px;background:var(--gold);color:var(--navy);border:none;font-weight:700;font-size:0.78rem;cursor:pointer">Altbau / Renovation</button>
-    <button id="btn-neubau" onclick="setMode('neubau')" style="flex:1;padding:9px;background:transparent;color:var(--dim);border:none;font-size:0.78rem;cursor:pointer;letter-spacing:0.3px">Neubau</button>
+    <button id="btn-altbau" onclick="setMode('altbau')" style="flex:1;padding:9px;background:var(--gold);color:var(--navy);border:none;font-weight:700;font-size:0.78rem;cursor:pointer;transition:background-color 180ms var(--ease-out),color 180ms var(--ease-out)">Altbau / Renovation</button>
+    <button id="btn-neubau" onclick="setMode('neubau')" style="flex:1;padding:9px;background:transparent;color:var(--dim);border:none;font-size:0.78rem;cursor:pointer;letter-spacing:0.3px;transition:background-color 180ms var(--ease-out),color 180ms var(--ease-out)">Neubau</button>
   </div>
 
   <div class="sec">
@@ -175,7 +189,7 @@ table.dtbl .blu{color:var(--blue)}
     <div style="font-size:0.7rem;color:var(--dim);margin-bottom:10px;line-height:1.6">
       §7b: extra <strong style="color:var(--gold)">5%/year</strong> for first 4 years (capped at €4,800/m²). Degressive AfA: <strong style="color:var(--gold)">5%</strong> of remaining book value each year.
     </div>
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;padding:8px 10px;border-radius:6px;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.25)">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;padding:8px 10px;border-radius:6px;background:rgba(212,175,106,0.06);border:1px solid rgba(212,175,106,0.25)">
       <input type="checkbox" id="kfw40-certified" onchange="calculate()" style="accent-color:var(--gold);width:15px;height:15px;flex-shrink:0">
       <label for="kfw40-certified" style="font-size:0.74rem;color:var(--dim);line-height:1.5;cursor:pointer">
         <strong style="color:var(--gold)">KfW 40 / QNG+ certified</strong> — required for §7b eligibility (Effizienzhaus 40 + Qualitätssiegel Nachhaltiges Gebäude Plus)
@@ -400,7 +414,7 @@ function updateChart(labels, propData, etfData) {
     data:{
       labels,
       datasets:[
-        {label:'Property Net Equity',data:propData,borderColor:'#C9A84C',backgroundColor:'rgba(201,168,76,0.08)',borderWidth:2.5,pointRadius:3,pointBackgroundColor:'#C9A84C',fill:true,tension:0.35},
+        {label:'Property Net Equity',data:propData,borderColor:'#d4af6a',backgroundColor:'rgba(212,175,106,0.08)',borderWidth:2.5,pointRadius:3,pointBackgroundColor:'#d4af6a',fill:true,tension:0.35},
         {label:'ETF Portfolio',data:etfData,borderColor:'#3498DB',backgroundColor:'rgba(52,152,219,0.08)',borderWidth:2.5,pointRadius:3,pointBackgroundColor:'#3498DB',fill:true,tension:0.35}
       ]
     },
@@ -410,8 +424,8 @@ function updateChart(labels, propData, etfData) {
       plugins:{
         legend:{labels:{color:'#8fa3c0',font:{size:11},padding:16}},
         tooltip:{
-          backgroundColor:'#1a2850',borderColor:'rgba(201,168,76,0.3)',borderWidth:1,
-          titleColor:'#C9A84C',bodyColor:'#fff',
+          backgroundColor:'#1a2850',borderColor:'rgba(212,175,106,0.3)',borderWidth:1,
+          titleColor:'#d4af6a',bodyColor:'#fff',
           callbacks:{label:c=>' '+c.dataset.label+': €'+c.parsed.y.toLocaleString('de-DE')}
         }
       },
@@ -428,8 +442,8 @@ let currentMode = 'altbau';
 function setMode(m) {
   currentMode = m;
   const isN = m === 'neubau';
-  G('btn-altbau').style.cssText = `flex:1;padding:9px;background:${isN?'transparent':'var(--gold)'};color:${isN?'var(--dim)':'var(--navy)'};border:none;font-weight:${isN?'400':'700'};font-size:0.78rem;cursor:pointer`;
-  G('btn-neubau').style.cssText = `flex:1;padding:9px;background:${isN?'var(--gold)':'transparent'};color:${isN?'var(--navy)':'var(--dim)'};border:none;font-weight:${isN?'700':'400'};font-size:0.78rem;cursor:pointer;letter-spacing:0.3px`;
+  G('btn-altbau').style.cssText = `flex:1;padding:9px;background:${isN?'transparent':'var(--gold)'};color:${isN?'var(--dim)':'var(--navy)'};border:none;font-weight:${isN?'400':'700'};font-size:0.78rem;cursor:pointer;transition:background-color 180ms var(--ease-out),color 180ms var(--ease-out)`;
+  G('btn-neubau').style.cssText = `flex:1;padding:9px;background:${isN?'var(--gold)':'transparent'};color:${isN?'var(--navy)':'var(--dim)'};border:none;font-weight:${isN?'700':'400'};font-size:0.78rem;cursor:pointer;letter-spacing:0.3px;transition:background-color 180ms var(--ease-out),color 180ms var(--ease-out)`;
   G('sec-neubau').style.display  = isN ? '' : 'none';
   G('row-altbau-afa').style.display = isN ? 'none' : '';
   G('sec-renov').style.display   = isN ? 'none' : '';
@@ -810,7 +824,7 @@ function buildDetailTable(yrs, price, ir, amortPct, rent, hmgmt, tmgmt, afa,
   const fn = v => v===null ? '—' : (v<0?'-':'')+'€'+Math.round(Math.abs(v)).toLocaleString('de-DE');
   const sumOf  = arr => arr.reduce((a,b)=>a+b,0);
   const lastOf = arr => arr[arr.length-1];
-  const BL = '1px solid rgba(201,168,76,0.15)';
+  const BL = '1px solid rgba(212,175,106,0.15)';
   const opCFA      = rentA.map((r,i) => r - hmgmt - tmgmt - (i===0 ? renovCost : 0));
   const financingA = intA.map((int,i) => -(int+amA[i]));
 
