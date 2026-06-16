@@ -172,6 +172,7 @@ td:first-child{font-weight:600}
     <div class="field-row"><label>Tax Class</label>
       <select id="client-form-taxclass"><option value="1">Class 1</option><option value="3">Class 3</option><option value="4">Class 4</option></select>
     </div>
+    <div class="field-row"><label>Renovation Cost (€)</label><input id="client-form-renov" type="number" value="0"></div>
     <div style="display:flex;gap:10px;margin-top:18px;justify-content:flex-end">
       <button class="btn btn-ghost" onclick="closeClientModal()">Cancel</button>
       <button class="btn btn-gold" onclick="saveClientRecord()">Create Client &amp; Get Link</button>
@@ -358,6 +359,7 @@ td:first-child{font-weight:600}
     document.getElementById('client-form-name').value = '';
     document.getElementById('client-form-email').value = '';
     document.getElementById('client-form-salary').value = 60000;
+    document.getElementById('client-form-renov').value = 0;
     document.getElementById('client-result-box').style.display = 'none';
     document.getElementById('client-modal-backdrop').style.display = 'flex';
   };
@@ -372,6 +374,7 @@ td:first-child{font-weight:600}
       name, email, assignedPropertyId: propertyId,
       salary: Number(document.getElementById('client-form-salary').value),
       taxClass: document.getElementById('client-form-taxclass').value,
+      renov: Number(document.getElementById('client-form-renov').value || 0),
       kirche: false, appr: 2.0, years: 10, etf: 7.0,
       createdAt: new Date().toISOString()
     };
