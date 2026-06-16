@@ -57,7 +57,8 @@ td:first-child{font-weight:600}
 .modal-close:hover{background:rgba(212,175,106,.1);color:var(--gold-bright)}
 .link-box{display:flex;align-items:center;gap:8px;background:rgba(212,175,106,.08);border:1px solid var(--border);border-radius:6px;padding:8px 10px;margin-top:14px}
 .link-box input{flex:1;background:transparent;border:none;color:var(--gold-bright);font-size:0.74rem;outline:none}
-.login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#070d1f,#0f1a3a)}
+.login-screen{min-height:100vh;display:none;align-items:center;justify-content:center;background:linear-gradient(135deg,#070d1f,#0f1a3a)}
+#boot-loader{display:flex;position:fixed;inset:0;background:#070d1f;z-index:9999;align-items:center;justify-content:center}
 .login-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:44px 38px;max-width:380px;width:90%;text-align:center}
 .login-card .logo{font-family:'Cinzel',serif;color:var(--gold-bright);font-size:1.05rem;font-weight:600;margin-bottom:8px}
 .login-card .sub{color:var(--dim);font-size:0.78rem;margin-bottom:30px}
@@ -66,6 +67,13 @@ td:first-child{font-weight:600}
 </style>
 </head>
 <body>
+
+<div id="boot-loader">
+  <div style="text-align:center">
+    <div style="font-family:'Cinzel',serif;color:#f0cf86;font-size:1.05rem;font-weight:600;letter-spacing:.04em;margin-bottom:10px">CORNERSTONE</div>
+    <div style="color:#8fa3c0;font-size:0.8rem">Loading…</div>
+  </div>
+</div>
 
 <div id="login-screen" class="login-screen">
   <div class="login-card">
@@ -221,10 +229,20 @@ td:first-child{font-weight:600}
   };
   window.adminSignOut = () => signOut(auth);
 
+  function hideBootLoader() {
+    const loader = document.getElementById('boot-loader');
+    if (loader) loader.style.display = 'none';
+  }
+
+  // Wait for Firebase to fully resolve the initial auth state before reacting —
+  // avoids a flash of the login screen for an already-authenticated admin.
+  await auth.authStateReady();
+
   onAuthStateChanged(auth, async (user) => {
     const userEmail = (user && user.email || '').toLowerCase();
     const isAuthorisedAdmin = !!user && ADMIN_EMAILS.map(e => e.toLowerCase()).includes(userEmail);
     if (!isAuthorisedAdmin) {
+      hideBootLoader();
       document.getElementById('login-screen').style.display = 'flex';
       document.getElementById('admin-app').style.display = 'none';
       if (user) {
@@ -235,6 +253,7 @@ td:first-child{font-weight:600}
       }
       return;
     }
+    hideBootLoader();
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('admin-app').style.display = 'block';
     document.getElementById('admin-email').textContent = user.email;
