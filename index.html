@@ -47,8 +47,8 @@ body{background:var(--navy);color:var(--text);font-family:'Inter',system-ui,sans
 input[type=range]{-webkit-appearance:none;flex:1;height:4px;background:rgba(255,255,255,.1);border-radius:4px;outline:none;cursor:pointer}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;background:var(--gold);cursor:pointer;box-shadow:0 0 6px rgba(212,175,106,.5);transition:transform 150ms var(--ease-out)}
 input[type=range]:active::-webkit-slider-thumb{transform:scale(1.25)}
-input[type=number]{width:78px;background:rgba(255,255,255,.07);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:0.78rem;padding:4px 7px;text-align:right;outline:none;transition:border-color 150ms var(--ease-out),background-color 150ms var(--ease-out)}
-input[type=number]:focus{border-color:var(--gold);background-color:rgba(255,255,255,.1)}
+input[type=number],input[inputmode=numeric]{width:78px;background:rgba(255,255,255,.07);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:0.78rem;padding:4px 7px;text-align:right;outline:none;transition:border-color 150ms var(--ease-out),background-color 150ms var(--ease-out)}
+input[type=number]:focus,input[inputmode=numeric]:focus{border-color:var(--gold);background-color:rgba(255,255,255,.1)}
 select{width:100%;background:rgba(255,255,255,.07);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:0.78rem;padding:6px 9px;outline:none;cursor:pointer;transition:border-color 150ms var(--ease-out)}
 select:focus,select:hover{border-color:var(--gold-dim)}
 select option{background:var(--card)}
@@ -214,8 +214,8 @@ table.dtbl .blu{color:var(--blue)}
 
   <div class="sec">
     <div class="sec-title">🏠 Property Details</div>
-    <div class="row"><div class="lbl"><span>Purchase Price</span><span class="val" id="d-price">€335,000</span></div><div class="sg"><input type="range" id="s-price" min="100000" max="900000" step="5000" value="335000"><input type="number" id="n-price" value="335000"></div></div>
-    <div class="row"><div class="lbl"><span>Cold Rent (€/month)</span><span class="val" id="d-rent">€1,080</span></div><div class="sg"><input type="range" id="s-rent" min="300" max="3500" step="20" value="1080"><input type="number" id="n-rent" value="1080"></div></div>
+    <div class="row"><div class="lbl"><span>Purchase Price</span><span class="val" id="d-price">€335,000</span></div><div class="sg"><input type="range" id="s-price" min="100000" max="900000" step="5000" value="335000"><input type="text" inputmode="numeric" id="n-price" value="335000"></div></div>
+    <div class="row"><div class="lbl"><span>Cold Rent (€/month)</span><span class="val" id="d-rent">€1,080</span></div><div class="sg"><input type="range" id="s-rent" min="300" max="3500" step="20" value="1080"><input type="text" inputmode="numeric" id="n-rent" value="1080"></div></div>
     <div class="row"><div class="lbl"><span>Building Portion (%)</span><span class="val" id="d-build">80%</span></div><div class="sg"><input type="range" id="s-build" min="60" max="90" step="1" value="80"><input type="number" id="n-build" value="80"></div></div>
   </div>
 
@@ -248,7 +248,7 @@ table.dtbl .blu{color:var(--blue)}
     </div>
     <div class="row"><div class="lbl"><span>Apartment Size (m²)</span><span class="val" id="d-area">63 m²</span></div><div class="sg"><input type="range" id="s-area" min="20" max="300" step="1" value="63"><input type="number" id="n-area" value="63"></div></div>
     <div id="neubau-eligibility" style="font-size:0.72rem;padding:7px 10px;border-radius:6px;margin:6px 0 10px;background:rgba(46,204,113,0.08);border:1px solid rgba(46,204,113,0.25);color:var(--green)">✓ Eligible for §7b — building value/m² within €5,200 limit</div>
-    <div class="row"><div class="lbl"><span>KfW Loan (€)</span><span class="val" id="d-kfw">€150,000</span></div><div class="sg"><input type="range" id="s-kfw" min="0" max="150000" step="5000" value="150000"><input type="number" id="n-kfw" value="150000"></div></div>
+    <div class="row"><div class="lbl"><span>KfW Loan (€)</span><span class="val" id="d-kfw">€150,000</span></div><div class="sg"><input type="range" id="s-kfw" min="0" max="150000" step="5000" value="150000"><input type="text" inputmode="numeric" id="n-kfw" value="150000"></div></div>
     <div class="row"><div class="lbl"><span>KfW Interest Rate (%)</span><span class="val" id="d-kfw-ir">2.5%</span></div><div class="sg"><input type="range" id="s-kfw-ir" min="0.5" max="6" step="0.1" value="2.5"><input type="number" id="n-kfw-ir" value="2.5" step="0.1"></div></div>
     <div style="display:flex;align-items:center;gap:10px;margin-top:10px;font-size:0.78rem;color:var(--dim)">
       <input type="checkbox" id="switch-linear" onchange="calculate()" style="accent-color:var(--gold);width:14px;height:14px">
@@ -263,8 +263,8 @@ table.dtbl .blu{color:var(--blue)}
 
   <div class="sec">
     <div class="sec-title">🔧 Management Costs</div>
-    <div class="row"><div class="lbl"><span>House Management (€/year)</span><span class="val" id="d-hmgmt">€360</span></div><div class="sg"><input type="range" id="s-hmgmt" min="0" max="2000" step="60" value="360"><input type="number" id="n-hmgmt" value="360"></div></div>
-    <div class="row"><div class="lbl"><span>Tenant Management (€/year)</span><span class="val" id="d-tmgmt">€600</span></div><div class="sg"><input type="range" id="s-tmgmt" min="0" max="3000" step="100" value="600"><input type="number" id="n-tmgmt" value="600"></div></div>
+    <div class="row"><div class="lbl"><span>House Management (€/year)</span><span class="val" id="d-hmgmt">€360</span></div><div class="sg"><input type="range" id="s-hmgmt" min="0" max="2000" step="60" value="360"><input type="text" inputmode="numeric" id="n-hmgmt" value="360"></div></div>
+    <div class="row"><div class="lbl"><span>Tenant Management (€/year)</span><span class="val" id="d-tmgmt">€600</span></div><div class="sg"><input type="range" id="s-tmgmt" min="0" max="3000" step="100" value="600"><input type="text" inputmode="numeric" id="n-tmgmt" value="600"></div></div>
   </div>
 
   <div class="sec" id="sec-renov">
@@ -274,7 +274,7 @@ table.dtbl .blu{color:var(--blue)}
     </div>
     <div class="row">
       <div class="lbl"><span>Renovation Costs (€)</span><span class="val" id="d-renov">€0</span></div>
-      <div class="sg"><input type="range" id="s-renov" min="0" max="150000" step="1000" value="0"><input type="number" id="n-renov" value="0"></div>
+      <div class="sg"><input type="range" id="s-renov" min="0" max="150000" step="1000" value="0"><input type="text" inputmode="numeric" id="n-renov" value="0"></div>
     </div>
     <div id="renov-info" style="font-size:0.7rem;margin-top:6px;padding:8px 10px;border-radius:6px;background:rgba(255,255,255,0.04);border:1px solid var(--border);line-height:1.7">
       <div>Safe budget (12% of purchase price): <span style="color:var(--gold);font-weight:700" id="renov-safe">€40,200</span></div>
@@ -286,7 +286,7 @@ table.dtbl .blu{color:var(--blue)}
 
   <div class="sec">
     <div class="sec-title">👤 Tax Profile</div>
-    <div class="row"><div class="lbl"><span>Annual Gross Salary (€)</span><span class="val" id="d-salary">€94,827</span></div><div class="sg"><input type="range" id="s-salary" min="30000" max="200000" step="1000" value="94827"><input type="number" id="n-salary" value="94827"></div></div>
+    <div class="row"><div class="lbl"><span>Annual Gross Salary (€)</span><span class="val" id="d-salary">€94,827</span></div><div class="sg"><input type="range" id="s-salary" min="30000" max="200000" step="1000" value="94827"><input type="text" inputmode="numeric" id="n-salary" value="94827"></div></div>
     <div class="row" style="margin-bottom:10px">
       <div class="lbl" style="margin-bottom:6px"><span>Tax Class (Steuerklasse)</span></div>
       <select id="tax-class">
@@ -438,7 +438,14 @@ function taxable(g) {
 
 // ── Helpers ───────────────────────────────────────────────────
 const G = id => document.getElementById(id);
-const N = id => parseFloat(G(id).value)||0;
+// Currency boxes display German thousand-separators (e.g. "335.000"); strip those
+// periods before parsing for exactly these field IDs. All other fields are
+// untouched - their decimal points stay intact.
+const THOUSANDS_BOX_IDS = new Set(['n-price','n-rent','n-hmgmt','n-tmgmt','n-salary','n-renov','n-kfw']);
+const N = id => {
+  const raw = G(id).value;
+  return parseFloat(THOUSANDS_BOX_IDS.has(id) ? String(raw).replace(/\./g,'') : raw) || 0;
+};
 const S = id => G(id).value;
 
 function fe(n) { return '€'+Math.round(n).toLocaleString('de-DE'); }
@@ -750,12 +757,25 @@ function calculate() {
 }
 
 // ── Slider ↔ Input linking ────────────────────────────────────
-function link(sId,nId,dId,fmt){
+function parseThousands(v){ return parseFloat(String(v).replace(/\./g,''))||0; }
+function fmtThousands(v){ return Math.round(Number(v)).toLocaleString('de-DE'); }
+
+function link(sId,nId,dId,fmt,useThousands){
   const sl=G(sId),ni=G(nId),di=G(dId);
-  function sync(v){ sl.value=v; ni.value=v; if(di)di.textContent=fmt(v); calculate(); }
+  function sync(v){
+    const num = useThousands ? parseThousands(v) : v;
+    sl.value=num;
+    ni.value = useThousands ? (document.activeElement===ni ? num : fmtThousands(num)) : num;
+    if(di)di.textContent=fmt(num);
+    calculate();
+  }
   sl.oninput=()=>sync(sl.value);
   ni.onchange=()=>sync(ni.value);
   ni.onkeyup=()=>sync(ni.value);
+  if(useThousands){
+    ni.onblur=()=>{ ni.value = fmtThousands(parseThousands(ni.value)); };
+    sync(sl.value); // format the static default value on initial load
+  }
 }
 
 function pct(v){ return Number(v).toFixed(1)+'%'; }
@@ -763,8 +783,8 @@ function eur(v){ return '€'+Number(v).toLocaleString('de-DE'); }
 function yr(v) { return v+' yrs'; }
 
 document.addEventListener('DOMContentLoaded',()=>{
-  link('s-price','n-price','d-price',eur);
-  link('s-rent','n-rent','d-rent',eur);
+  link('s-price','n-price','d-price',eur,true);
+  link('s-rent','n-rent','d-rent',eur,true);
   link('s-build','n-build','d-build',v=>v+'%');
   link('s-ttax','n-ttax','d-ttax',pct);
   link('s-notary','n-notary','d-notary',pct);
@@ -773,15 +793,15 @@ document.addEventListener('DOMContentLoaded',()=>{
   link('s-ir','n-ir','d-ir',pct);
   link('s-amort','n-amort','d-amort',pct);
   link('s-afa','n-afa','d-afa',pct);
-  link('s-hmgmt','n-hmgmt','d-hmgmt',eur);
-  link('s-tmgmt','n-tmgmt','d-tmgmt',eur);
-  link('s-salary','n-salary','d-salary',eur);
+  link('s-hmgmt','n-hmgmt','d-hmgmt',eur,true);
+  link('s-tmgmt','n-tmgmt','d-tmgmt',eur,true);
+  link('s-salary','n-salary','d-salary',eur,true);
   link('s-appr','n-appr','d-appr',pct);
   link('s-years','n-years','d-years',yr);
   link('s-etf','n-etf','d-etf',pct);
-  link('s-renov','n-renov','d-renov',eur);
+  link('s-renov','n-renov','d-renov',eur,true);
   link('s-area','n-area','d-area',v=>Math.round(v)+' m²');
-  link('s-kfw','n-kfw','d-kfw',eur);
+  link('s-kfw','n-kfw','d-kfw',eur,true);
   link('s-kfw-ir','n-kfw-ir','d-kfw-ir',pct);
 
   G('tax-class').onchange=()=>{ calculate(); };
