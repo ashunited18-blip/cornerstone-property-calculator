@@ -201,8 +201,9 @@ td:first-child{font-weight:600}
         <div class="field-row"><label>City</label><input id="prop-city" placeholder="Ingolstadt"></div>
         <div class="field-row"><label>Build Year</label><input id="prop-buildYear" placeholder="1934"></div>
         <div class="field-row"><label>Status</label>
-          <select id="prop-status"><option value="available">Available</option><option value="reserved">Reserved</option><option value="sold">Sold</option></select>
+          <select id="prop-status" onchange="toggleAssignRow()"><option value="available">Available</option><option value="reserved">Reserved</option><option value="sold">Sold</option></select>
         </div>
+        <div class="field-row" id="prop-assign-row" style="display:none"><label>Assign to Client</label><select id="prop-assign-client"><option value="">— Select client —</option></select></div>
         <div class="field-row"><label>Mode</label>
           <select id="prop-mode"><option value="altbau">Altbau</option><option value="neubau">Neubau</option></select>
         </div>
@@ -449,6 +450,20 @@ td:first-child{font-weight:600}
     sel.innerHTML = properties.map(p => `<option value="${p.id}">${esc(p.address)}, ${esc(p.city)}</option>`).join('');
   }
 
+  function renderPropAssignDropdown(selectedClientId) {
+    const sel = document.getElementById('prop-assign-client');
+    sel.innerHTML = '<option value="">— Select client —</option>' +
+      clients.map(c => `<option value="${c.id}">${esc(c.name)} (${esc(c.email)})</option>`).join('');
+    sel.value = selectedClientId || '';
+  }
+
+  window.toggleAssignRow = function () {
+    const status = document.getElementById('prop-status').value;
+    const row = document.getElementById('prop-assign-row');
+    row.style.display = (status === 'reserved' || status === 'sold') ? 'flex' : 'none';
+    if (row.style.display === 'flex') renderPropAssignDropdown(document.getElementById('prop-assign-client').value);
+  };
+
   function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
   // ── Property modal ──
@@ -501,6 +516,7 @@ td:first-child{font-weight:600}
     ['address','city','buildYear'].forEach(f => document.getElementById('prop-' + f).value = '');
     document.getElementById('prop-status').value = 'available';
     document.getElementById('prop-mode').value = 'altbau';
+    document.getElementById('prop-assign-row').style.display = 'none';
     currentPhotos = [];
     renderPhotoPreviews();
     document.getElementById('property-modal-backdrop').style.display = 'flex';
@@ -517,27 +533,23 @@ td:first-child{font-weight:600}
     if (p['kfw-ir'] !== undefined) document.getElementById('prop-kfw-ir').value = p['kfw-ir'];
     currentPhotos = Array.isArray(p.photos) ? p.photos.slice() : [];
     renderPhotoPreviews();
+    const currentClient = clients.find(c => c.assignedPropertyId === id);
+    document.getElementById('prop-assign-row').style.display = (p.status === 'reserved' || p.status === 'sold') ? 'flex' : 'none';
+    if (document.getElementById('prop-assign-row').style.display === 'flex') {
+      renderPropAssignDropdown(currentClient ? currentClient.id : '');
+    }
     document.getElementById('property-modal-backdrop').style.display = 'flex';
   };
 
   window.saveProperty = async function () {
     const id = document.getElementById('prop-id').value;
     const status = document.getElementById('prop-status').value;
+    const needsClient = status === 'reserved' || status === 'sold';
+    const selectedClientId = needsClient ? document.getElementById('prop-assign-client').value : '';
 
-    if (id && (status === 'reserved' || status === 'sold')) {
-      const assignedCount = clients.filter(c => c.assignedPropertyId === id).length;
-      if (assignedCount > 1) {
-        const proceed = confirm(
-          'This property has ' + assignedCount + ' clients assigned, but a ' + status +
-          ' property should normally have only one. Continue anyway?'
-        );
-        if (!proceed) return;
-      } else if (assignedCount === 0) {
-        const proceed = confirm(
-          'Marking this property as ' + status + ', but no client is assigned to it yet. Continue anyway?'
-        );
-        if (!proceed) return;
-      }
+    if (needsClient && !selectedClientId) {
+      alert('Please select which client this property is ' + status + ' to.');
+      return;
     }
 
     const data = {
@@ -565,12 +577,27 @@ td:first-child{font-weight:600}
       'kfw-ir': Number(document.getElementById('prop-kfw-ir').value),
       updatedAt: new Date().toISOString()
     };
+    let propertyId = id;
     if (id) {
       await updateDoc(doc(db, 'properties', id), data);
     } else {
       data.createdAt = new Date().toISOString();
-      await addDoc(collection(db, 'properties'), data);
+      const ref = await addDoc(collection(db, 'properties'), data);
+      propertyId = ref.id;
     }
+
+    // Sync the client assignment: whoever is selected (if reserved/sold) becomes the
+    // only client pointing at this property; anyone else previously assigned gets cleared.
+    const previouslyAssigned = clients.filter(c => c.assignedPropertyId === propertyId);
+    for (const c of previouslyAssigned) {
+      if (c.id !== selectedClientId) {
+        await updateDoc(doc(db, 'clients', c.id), { assignedPropertyId: '' });
+      }
+    }
+    if (needsClient && selectedClientId) {
+      await updateDoc(doc(db, 'clients', selectedClientId), { assignedPropertyId: propertyId });
+    }
+
     closePropertyModal();
     await refreshAll();
   };
