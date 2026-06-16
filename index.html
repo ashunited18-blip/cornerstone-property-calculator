@@ -1106,9 +1106,9 @@ window.mobTab = function(tab){
 
   // Property fields — set by admin only, locked in client view
   const PROPERTY_FIELDS = ['price','rent','build','ttax','notary','broker','fin','ir','amort','afa',
-                            'area','kfw','kfw-ir','hmgmt','tmgmt','renov'];
+                            'area','kfw','kfw-ir','hmgmt','tmgmt'];
   // Personal fields — editable by the signed-in client, auto-saved
-  const PERSONAL_FIELDS = ['salary','appr','years','etf'];
+  const PERSONAL_FIELDS = ['salary','appr','years','etf','renov'];
 
   const clientId = new URLSearchParams(location.search).get('client');
   let clientData = null, propertyData = null;
