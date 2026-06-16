@@ -1097,8 +1097,13 @@ window.mobTab = function(tab){
   function setVal(key, v) {
     if (v === undefined || v === null) return;
     const s = document.getElementById('s-' + key), n = document.getElementById('n-' + key);
-    if (s) s.value = v;
-    if (n) n.value = v;
+    if (s) {
+      s.value = v;
+      s.dispatchEvent(new Event('input', { bubbles: true })); // triggers link()'s sync() so the display label + calculate() refresh too
+    } else if (n) {
+      n.value = v;
+      n.dispatchEvent(new Event('change', { bubbles: true }));
+    }
   }
 
   function lockPropertyFields() {
@@ -1179,12 +1184,13 @@ window.mobTab = function(tab){
   }
 
   if (clientId) {
-    document.getElementById('client-gate').style.display = 'flex';
+    // Gate stays hidden until we know for sure the user isn't already signed in —
+    // avoids a visible flash of the sign-in button on every refresh for returning users.
     document.getElementById('btn-google-signin').onclick = () => {
       signInWithPopup(auth, new GoogleAuthProvider()).catch(e => showGateError(e.message));
     };
     onAuthStateChanged(auth, async (user) => {
-      if (!user) return;
+      if (!user) { document.getElementById('client-gate').style.display = 'flex'; return; }
       try {
         const snap = await getDoc(doc(db, 'clients', clientId));
         if (!snap.exists()) { showGateError('This link is no longer valid.'); await signOut(auth); return; }
