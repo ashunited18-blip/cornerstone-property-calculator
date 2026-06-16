@@ -268,7 +268,7 @@ td:first-child{font-weight:600}
         <td>€${Number(p.rent || 0).toLocaleString('de-DE')}</td>
         <td><span class="status ${p.status || 'available'}">${p.status || 'available'}</span></td>
         <td>${esc(names)}</td>
-        <td><button class="action-link" onclick="editProperty('${p.id}')">Edit</button></td>
+        <td><button class="action-link" onclick="editProperty('${p.id}')">Edit</button> <button class="action-link" style="color:var(--red);border-color:rgba(231,76,60,0.3)" onclick="deleteProperty('${p.id}')">Delete</button></td>
       </tr>`;
     }).join('');
   }
@@ -284,7 +284,7 @@ td:first-child{font-weight:600}
         <td>${esc(c.email || '—')}</td>
         <td>${esc(propLabel)}</td>
         <td>${c.savedAt ? new Date(c.savedAt).toLocaleString('de-DE') : '—'}</td>
-        <td><button class="action-link" onclick="copyClientLinkAdmin('${c.id}')">Copy Link</button></td>
+        <td><button class="action-link" onclick="copyClientLinkAdmin('${c.id}')">Copy Link</button> <button class="action-link" style="color:var(--red);border-color:rgba(231,76,60,0.3)" onclick="deleteClient('${c.id}')">Delete</button></td>
       </tr>`;
     }).join('');
   }
@@ -389,6 +389,23 @@ td:first-child{font-weight:600}
     const url = CALCULATOR_URL + '?client=' + id;
     navigator.clipboard.writeText(url).catch(() => {});
     alert('Link copied:\n' + url);
+  };
+
+  window.deleteProperty = async function (id) {
+    const p = properties.find(x => x.id === id);
+    const assignedCount = clients.filter(c => c.assignedPropertyId === id).length;
+    let msg = 'Delete property "' + (p ? p.address : id) + '"? This cannot be undone.';
+    if (assignedCount > 0) msg += '\n\n' + assignedCount + ' client(s) are assigned to this property and will lose access.';
+    if (!confirm(msg)) return;
+    await deleteDoc(doc(db, 'properties', id));
+    await refreshAll();
+  };
+
+  window.deleteClient = async function (id) {
+    const c = clients.find(x => x.id === id);
+    if (!confirm('Delete client "' + (c ? c.name : id) + '"? Their link will stop working immediately.')) return;
+    await deleteDoc(doc(db, 'clients', id));
+    await refreshAll();
   };
   window.copyResultLink = function () {
     const inp = document.getElementById('client-result-link');
