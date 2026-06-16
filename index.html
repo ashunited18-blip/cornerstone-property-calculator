@@ -1216,6 +1216,11 @@ window.mobTab = function(tab){
     document.getElementById('btn-google-signin').onclick = () => {
       signInWithPopup(auth, new GoogleAuthProvider()).catch(e => showGateError(e.message));
     };
+    // Firebase can fire onAuthStateChanged once with null while it's still restoring
+    // a persisted session, then again with the real user a moment later. Waiting for
+    // authStateReady() first means our listener only ever sees the settled state,
+    // so the gate never flashes for an already-signed-in client.
+    await auth.authStateReady();
     onAuthStateChanged(auth, async (user) => {
       if (!user) { document.getElementById('client-gate').style.display = 'flex'; revealPage(); return; }
       try {
