@@ -53,7 +53,7 @@ th{text-align:left;color:var(--dim);font-weight:600;padding:9px 12px;border-bott
 td{padding:11px 12px;border-bottom:1px solid rgba(255,255,255,.04);transition:background-color 150ms var(--ease-out)}
 tr:hover td{background:rgba(212,175,106,.04)}
 td:first-child{font-weight:600}
-.status{display:inline-block;padding:3px 10px;border-radius:20px;font-size:0.68rem;font-weight:600}
+.status{display:inline-block;padding:3px 10px;border-radius:20px;font-size:0.68rem;font-weight:600;text-transform:capitalize}
 .status.available{background:rgba(127,198,154,0.15);color:var(--green)}
 .status.reserved{background:rgba(212,175,106,0.15);color:var(--gold)}
 .status.sold{background:rgba(231,76,60,0.15);color:var(--red)}
@@ -453,7 +453,7 @@ td:first-child{font-weight:600}
   function renderPropAssignDropdown(selectedClientId) {
     const sel = document.getElementById('prop-assign-client');
     sel.innerHTML = '<option value="">— Select client —</option>' +
-      clients.map(c => `<option value="${c.id}">${esc(c.name)} (${esc(c.email)})</option>`).join('');
+      clients.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
     sel.value = selectedClientId || '';
   }
 
