@@ -152,9 +152,9 @@ table.dtbl .blu{color:var(--blue)}
 
 <!-- Photo lightbox — click-to-expand, prev/next when a property has multiple photos -->
 <div id="lightbox" style="display:none;position:fixed;inset:0;background:rgba(3,9,26,0.93);z-index:2000;align-items:center;justify-content:center" onclick="if(event.target.id==='lightbox')closeLightbox()">
-  <button onclick="closeLightbox()" style="position:absolute;top:18px;right:22px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:1.1rem;cursor:pointer">✕</button>
-  <button id="lb-prev" onclick="lightboxNav(-1)" style="display:none;position:absolute;left:18px;top:50%;transform:translateY(-50%);width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:1.3rem;cursor:pointer">‹</button>
-  <button id="lb-next" onclick="lightboxNav(1)" style="display:none;position:absolute;right:18px;top:50%;transform:translateY(-50%);width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:1.3rem;cursor:pointer">›</button>
+  <button onclick="closeLightbox()" style="display:flex;align-items:center;justify-content:center;position:absolute;top:18px;right:22px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:1.1rem;cursor:pointer;line-height:1;padding:0">✕</button>
+  <button id="lb-prev" onclick="lightboxNav(-1)" style="display:none;align-items:center;justify-content:center;position:absolute;left:18px;top:50%;transform:translateY(-50%);width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:1.3rem;cursor:pointer;line-height:1;padding:0">‹</button>
+  <button id="lb-next" onclick="lightboxNav(1)" style="display:none;align-items:center;justify-content:center;position:absolute;right:18px;top:50%;transform:translateY(-50%);width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:1.3rem;cursor:pointer;line-height:1;padding:0">›</button>
   <img id="lightbox-img" style="max-width:90%;max-height:80vh;border-radius:10px;object-fit:contain">
   <div id="lightbox-dots" style="display:none;position:absolute;bottom:28px;left:0;right:0;justify-content:center;gap:6px"></div>
 </div>
