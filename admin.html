@@ -32,7 +32,7 @@ body{background:var(--navy);color:var(--text);font-family:'Inter',system-ui,sans
 .nav-item .ic{font-size:0.95rem;width:18px;text-align:center}
 .nav-item:hover{background:rgba(212,175,106,.06);color:var(--text)}
 .nav-item.active{background:rgba(212,175,106,.1);color:var(--gold-bright);border-right-color:var(--gold)}
-.insights-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:24px}
+.insights-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
 .insight-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;transition:transform 200ms var(--ease-out)}
 .insight-card .iv{font-size:1.3rem;font-weight:700;color:var(--gold-bright)}
 .insight-card .il{font-size:0.68rem;color:var(--dim);margin-top:3px;text-transform:uppercase;letter-spacing:.05em}
@@ -121,26 +121,23 @@ td:first-child{font-weight:600}
 
   <div class="shell">
   <div class="sidebar-nav">
-    <div class="nav-item active" id="nav-properties" onclick="showView('properties',this)"><span class="ic">🏠</span> Properties</div>
-    <div class="nav-item" id="nav-clients" onclick="showView('clients',this)"><span class="ic">👥</span> Clients</div>
+    <div class="nav-item active" id="nav-properties" onclick="showView('main',this,'properties-anchor')"><span class="ic">🏠</span> Properties</div>
+    <div class="nav-item" id="nav-clients" onclick="showView('main',this,'clients-anchor')"><span class="ic">👥</span> Clients</div>
     <div class="nav-item" id="nav-analytics" onclick="showView('analytics',this)"><span class="ic">📊</span> Analytics</div>
     <div class="nav-item" id="nav-settings" onclick="showView('settings',this)"><span class="ic">⚙️</span> Settings</div>
   </div>
   <div class="wrap">
-    <div class="insights-row" id="insights-row">
-      <div class="insight-card"><div class="iv" id="st-total">—</div><div class="il">Total Properties</div></div>
-      <div class="insight-card"><div class="iv" id="in-value">—</div><div class="il">Total Portfolio Value</div></div>
-      <div class="insight-card"><div class="iv" id="in-rent">—</div><div class="il">Total Monthly Rent</div></div>
-      <div class="insight-card"><div class="iv" id="in-clients">—</div><div class="il">Total Clients</div></div>
-    </div>
-    <div class="stats-row" id="stats-row">
-      <div class="stat-card"><div class="sv" id="st-available" style="color:var(--green)">—</div><div class="sl">Available</div></div>
-      <div class="stat-card"><div class="sv" id="st-reserved" style="color:var(--gold)">—</div><div class="sl">Reserved</div></div>
-      <div class="stat-card"><div class="sv" id="st-sold" style="color:var(--red)">—</div><div class="sl">Sold</div></div>
-    </div>
+    <div id="view-main" class="view-section active">
+      <div class="insights-row" id="insights-row">
+        <div class="insight-card"><div class="iv" id="st-total">—</div><div class="il">Total Properties</div></div>
+        <div class="insight-card"><div class="iv" id="in-clients">—</div><div class="il">Total Clients</div></div>
+        <div class="insight-card"><div class="iv" id="st-available" style="color:var(--green)">—</div><div class="il">Available</div></div>
+        <div class="insight-card"><div class="iv" id="st-reserved" style="color:var(--gold)">—</div><div class="il">Reserved</div></div>
+        <div class="insight-card"><div class="iv" id="st-sold" style="color:var(--red)">—</div><div class="il">Sold</div></div>
+        <div class="insight-card"><div class="iv" id="in-value">—</div><div class="il">Total Portfolio Value</div></div>
+      </div>
 
-    <div id="view-properties" class="view-section active">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <div id="properties-anchor" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
         <div class="section-title">Properties</div>
         <button class="btn btn-gold" onclick="openPropertyModal()">+ Add Property</button>
       </div>
@@ -149,10 +146,8 @@ td:first-child{font-weight:600}
         <thead><tr><th></th><th>Property</th><th>City</th><th>Price</th><th>Rent/mo</th><th>Status</th><th>Clients</th><th></th></tr></thead>
         <tbody id="properties-tbody"><tr><td colspan="8" style="color:var(--dim)">Loading…</td></tr></tbody>
       </table>
-    </div>
 
-    <div id="view-clients" class="view-section">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <div id="clients-anchor" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;margin-top:30px">
         <div class="section-title">Clients</div>
         <button class="btn btn-gold" onclick="openClientModal()">+ Add Client</button>
       </div>
@@ -169,11 +164,11 @@ td:first-child{font-weight:600}
       <div class="analytics-grid">
         <div class="chart-card">
           <h3>Status Breakdown</h3>
-          <canvas id="chart-status" height="200"></canvas>
+          <div style="position:relative;height:160px"><canvas id="chart-status"></canvas></div>
         </div>
         <div class="chart-card">
           <h3>Price by Property</h3>
-          <canvas id="chart-price" height="200"></canvas>
+          <div style="position:relative;height:160px"><canvas id="chart-price"></canvas></div>
         </div>
       </div>
     </div>
@@ -356,7 +351,7 @@ td:first-child{font-weight:600}
     document.getElementById('in-clients').textContent = clients.length;
   }
 
-  window.showView = function (name, el) {
+  window.showView = function (name, el, scrollToId) {
     document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
     const target = document.getElementById('view-' + name);
     if (target) target.classList.add('active');
@@ -365,6 +360,10 @@ td:first-child{font-weight:600}
     if (name === 'settings') {
       const emailEl = document.getElementById('settings-email');
       if (emailEl) emailEl.textContent = (auth.currentUser && auth.currentUser.email) || '—';
+    }
+    if (scrollToId) {
+      const anchor = document.getElementById(scrollToId);
+      if (anchor) anchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
 
@@ -387,7 +386,7 @@ td:first-child{font-weight:600}
         labels: ['Available', 'Reserved', 'Sold'],
         datasets: [{ data: [counts.available, counts.reserved, counts.sold], backgroundColor: ['#7fc69a', '#d4af6a', '#E74C3C'], borderWidth: 0 }]
       },
-      options: { plugins: { legend: { labels: { color: '#8fa3c0' } } }, cutout: '60%' }
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#8fa3c0', boxWidth: 12, font: { size: 11 } } } }, cutout: '60%' }
     });
 
     if (priceChart) priceChart.destroy();
@@ -398,10 +397,11 @@ td:first-child{font-weight:600}
         datasets: [{ label: 'Price (€)', data: properties.map(p => Number(p.price || 0)), backgroundColor: '#d4af6a', borderRadius: 4 }]
       },
       options: {
+        responsive: true, maintainAspectRatio: false,
         plugins: { legend: { display: false } },
         scales: {
-          x: { ticks: { color: '#8fa3c0' }, grid: { display: false } },
-          y: { ticks: { color: '#8fa3c0' }, grid: { color: 'rgba(255,255,255,.06)' } }
+          x: { ticks: { color: '#8fa3c0', font: { size: 10 } }, grid: { display: false } },
+          y: { ticks: { color: '#8fa3c0', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,.06)' } }
         }
       }
     });
