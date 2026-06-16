@@ -460,8 +460,8 @@ td:first-child{font-weight:600}
   window.toggleAssignRow = function () {
     const status = document.getElementById('prop-status').value;
     const row = document.getElementById('prop-assign-row');
-    row.style.display = (status === 'reserved' || status === 'sold') ? 'flex' : 'none';
-    if (row.style.display === 'flex') renderPropAssignDropdown(document.getElementById('prop-assign-client').value);
+    row.style.display = (status === 'reserved' || status === 'sold') ? 'grid' : 'none';
+    if (row.style.display === 'grid') renderPropAssignDropdown(document.getElementById('prop-assign-client').value);
   };
 
   function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
@@ -534,8 +534,8 @@ td:first-child{font-weight:600}
     currentPhotos = Array.isArray(p.photos) ? p.photos.slice() : [];
     renderPhotoPreviews();
     const currentClient = clients.find(c => c.assignedPropertyId === id);
-    document.getElementById('prop-assign-row').style.display = (p.status === 'reserved' || p.status === 'sold') ? 'flex' : 'none';
-    if (document.getElementById('prop-assign-row').style.display === 'flex') {
+    document.getElementById('prop-assign-row').style.display = (p.status === 'reserved' || p.status === 'sold') ? 'grid' : 'none';
+    if (document.getElementById('prop-assign-row').style.display === 'grid') {
       renderPropAssignDropdown(currentClient ? currentClient.id : '');
     }
     document.getElementById('property-modal-backdrop').style.display = 'flex';
