@@ -344,10 +344,8 @@ td:first-child{font-weight:600}
     document.getElementById('st-sold').textContent = properties.filter(p => p.status === 'sold').length;
 
     const totalValue = properties.reduce((sum, p) => sum + Number(p.price || 0), 0);
-    const totalRent  = properties.reduce((sum, p) => sum + Number(p.rent || 0), 0);
 
     document.getElementById('in-value').textContent   = '€' + totalValue.toLocaleString('de-DE');
-    document.getElementById('in-rent').textContent    = '€' + totalRent.toLocaleString('de-DE');
     document.getElementById('in-clients').textContent = clients.length;
   }
 
