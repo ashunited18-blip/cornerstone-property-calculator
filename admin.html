@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cornerstone Admin</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -24,25 +25,28 @@ body{background:var(--navy);color:var(--text);font-family:'Inter',system-ui,sans
 .btn:active{transform:scale(0.96)}
 .btn-gold{background:var(--gold);color:var(--navy)}
 .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--dim)}
-.wrap{max-width:1500px;padding:28px 32px;flex:1;min-width:0}
+.wrap{padding:28px 32px;flex:1;min-width:0}
 .shell{display:flex;align-items:flex-start}
 .sidebar-nav{width:200px;flex-shrink:0;background:var(--navy2);border-right:1px solid var(--border);min-height:calc(100vh - 68px);padding:18px 0;position:sticky;top:68px}
 .nav-item{display:flex;align-items:center;gap:10px;padding:11px 22px;font-size:0.82rem;color:var(--dim);cursor:pointer;transition:background-color 150ms var(--ease-out),color 150ms var(--ease-out);border-right:3px solid transparent}
 .nav-item .ic{font-size:0.95rem;width:18px;text-align:center}
 .nav-item:hover{background:rgba(212,175,106,.06);color:var(--text)}
 .nav-item.active{background:rgba(212,175,106,.1);color:var(--gold-bright);border-right-color:var(--gold)}
-.nav-item.disabled{cursor:default;color:rgba(143,163,192,.45)}
-.nav-item.disabled:hover{background:transparent;color:rgba(143,163,192,.45)}
-.nav-item .soon{margin-left:auto;font-size:0.6rem;background:rgba(255,255,255,.06);padding:2px 6px;border-radius:4px;letter-spacing:.04em}
-.insights-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.insights-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:24px}
 .insight-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;transition:transform 200ms var(--ease-out)}
 .insight-card .iv{font-size:1.3rem;font-weight:700;color:var(--gold-bright)}
 .insight-card .il{font-size:0.68rem;color:var(--dim);margin-top:3px;text-transform:uppercase;letter-spacing:.05em}
 .section-title{font-family:'Cinzel',serif;font-size:1rem;font-weight:600;color:var(--gold-bright);margin-bottom:4px}
 .section-sub{font-size:0.78rem;color:var(--dim);margin-bottom:20px}
-.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px}
 .stat-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;transition:transform 200ms var(--ease-out)}
 .stat-card .sv{font-size:1.5rem;font-weight:700}
+.view-section{display:none}
+.view-section.active{display:block}
+.analytics-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px}
+.chart-card h3{font-family:'Cinzel',serif;font-size:0.85rem;color:var(--gold-bright);margin-bottom:14px;font-weight:600}
+.empty-note{color:var(--dim);font-size:0.85rem;padding:40px 20px;text-align:center}
 .stat-card .sl{font-size:0.68rem;color:var(--dim);margin-top:3px;text-transform:uppercase;letter-spacing:.05em}
 table{width:100%;border-collapse:collapse;font-size:0.8rem;margin-bottom:30px}
 th{text-align:left;color:var(--dim);font-weight:600;padding:9px 12px;border-bottom:1px solid var(--border);font-size:0.7rem;text-transform:uppercase;letter-spacing:.05em}
@@ -117,45 +121,75 @@ td:first-child{font-weight:600}
 
   <div class="shell">
   <div class="sidebar-nav">
-    <div class="nav-item active" onclick="scrollToSection('properties-section',this)"><span class="ic">🏠</span> Properties</div>
-    <div class="nav-item" onclick="scrollToSection('clients-section',this)"><span class="ic">👥</span> Clients</div>
-    <div class="nav-item disabled"><span class="ic">📊</span> Analytics <span class="soon">Soon</span></div>
-    <div class="nav-item disabled"><span class="ic">⚙️</span> Settings <span class="soon">Soon</span></div>
+    <div class="nav-item active" id="nav-properties" onclick="showView('properties',this)"><span class="ic">🏠</span> Properties</div>
+    <div class="nav-item" id="nav-clients" onclick="showView('clients',this)"><span class="ic">👥</span> Clients</div>
+    <div class="nav-item" id="nav-analytics" onclick="showView('analytics',this)"><span class="ic">📊</span> Analytics</div>
+    <div class="nav-item" id="nav-settings" onclick="showView('settings',this)"><span class="ic">⚙️</span> Settings</div>
   </div>
   <div class="wrap">
     <div class="insights-row" id="insights-row">
+      <div class="insight-card"><div class="iv" id="st-total">—</div><div class="il">Total Properties</div></div>
       <div class="insight-card"><div class="iv" id="in-value">—</div><div class="il">Total Portfolio Value</div></div>
       <div class="insight-card"><div class="iv" id="in-rent">—</div><div class="il">Total Monthly Rent</div></div>
-      <div class="insight-card"><div class="iv" id="in-yield">—</div><div class="il">Average Gross Yield</div></div>
       <div class="insight-card"><div class="iv" id="in-clients">—</div><div class="il">Total Clients</div></div>
     </div>
-
     <div class="stats-row" id="stats-row">
-      <div class="stat-card"><div class="sv" id="st-total">—</div><div class="sl">Total Listed</div></div>
       <div class="stat-card"><div class="sv" id="st-available" style="color:var(--green)">—</div><div class="sl">Available</div></div>
       <div class="stat-card"><div class="sv" id="st-reserved" style="color:var(--gold)">—</div><div class="sl">Reserved</div></div>
       <div class="stat-card"><div class="sv" id="st-sold" style="color:var(--red)">—</div><div class="sl">Sold</div></div>
     </div>
 
-    <div id="properties-section" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-      <div class="section-title">Properties</div>
-      <button class="btn btn-gold" onclick="openPropertyModal()">+ Add Property</button>
+    <div id="view-properties" class="view-section active">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div class="section-title">Properties</div>
+        <button class="btn btn-gold" onclick="openPropertyModal()">+ Add Property</button>
+      </div>
+      <div class="section-sub">All listed properties and their assigned clients</div>
+      <table>
+        <thead><tr><th></th><th>Property</th><th>City</th><th>Price</th><th>Rent/mo</th><th>Status</th><th>Clients</th><th></th></tr></thead>
+        <tbody id="properties-tbody"><tr><td colspan="8" style="color:var(--dim)">Loading…</td></tr></tbody>
+      </table>
     </div>
-    <div class="section-sub">All listed properties and their assigned clients</div>
-    <table>
-      <thead><tr><th></th><th>Property</th><th>City</th><th>Price</th><th>Rent/mo</th><th>Status</th><th>Clients</th><th></th></tr></thead>
-      <tbody id="properties-tbody"><tr><td colspan="8" style="color:var(--dim)">Loading…</td></tr></tbody>
-    </table>
 
-    <div id="clients-section" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-      <div class="section-title">Clients</div>
-      <button class="btn btn-gold" onclick="openClientModal()">+ Add Client</button>
+    <div id="view-clients" class="view-section">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div class="section-title">Clients</div>
+        <button class="btn btn-gold" onclick="openClientModal()">+ Add Client</button>
+      </div>
+      <div class="section-sub">Invitation-only access — each client is bound to one Google account</div>
+      <table>
+        <thead><tr><th>Name</th><th>Email</th><th>Assigned Property</th><th>Last Saved</th><th></th></tr></thead>
+        <tbody id="clients-tbody"><tr><td colspan="5" style="color:var(--dim)">Loading…</td></tr></tbody>
+      </table>
     </div>
-    <div class="section-sub">Invitation-only access — each client is bound to one Google account</div>
-    <table>
-      <thead><tr><th>Name</th><th>Email</th><th>Assigned Property</th><th>Last Saved</th><th></th></tr></thead>
-      <tbody id="clients-tbody"><tr><td colspan="5" style="color:var(--dim)">Loading…</td></tr></tbody>
-    </table>
+
+    <div id="view-analytics" class="view-section">
+      <div class="section-title">Analytics</div>
+      <div class="section-sub">Portfolio breakdown across all listed properties</div>
+      <div class="analytics-grid">
+        <div class="chart-card">
+          <h3>Status Breakdown</h3>
+          <canvas id="chart-status" height="200"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>Price by Property</h3>
+          <canvas id="chart-price" height="200"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div id="view-settings" class="view-section">
+      <div class="section-title">Settings</div>
+      <div class="section-sub">Account &amp; access configuration</div>
+      <div class="chart-card" style="max-width:520px">
+        <h3>Admin Access</h3>
+        <p style="font-size:0.8rem;color:var(--dim);line-height:1.7">
+          Admin access is currently restricted to specific Google account emails, configured directly in
+          Firestore security rules (not editable from this screen yet).<br><br>
+          Signed in as: <strong style="color:var(--text)" id="settings-email">—</strong>
+        </p>
+      </div>
+    </div>
   </div>
   </div>
 </div>
@@ -305,6 +339,7 @@ td:first-child{font-weight:600}
     renderProperties();
     renderClients();
     renderPropertyDropdown();
+    renderCharts();
   }
 
   function renderStats() {
@@ -315,20 +350,62 @@ td:first-child{font-weight:600}
 
     const totalValue = properties.reduce((sum, p) => sum + Number(p.price || 0), 0);
     const totalRent  = properties.reduce((sum, p) => sum + Number(p.rent || 0), 0);
-    const yields = properties.filter(p => p.price > 0).map(p => (Number(p.rent || 0) * 12 / Number(p.price)) * 100);
-    const avgYield = yields.length ? yields.reduce((a, b) => a + b, 0) / yields.length : 0;
 
     document.getElementById('in-value').textContent   = '€' + totalValue.toLocaleString('de-DE');
     document.getElementById('in-rent').textContent    = '€' + totalRent.toLocaleString('de-DE');
-    document.getElementById('in-yield').textContent   = yields.length ? avgYield.toFixed(2) + '%' : '—';
     document.getElementById('in-clients').textContent = clients.length;
   }
 
-  window.scrollToSection = function (id, el) {
-    document.getElementById(id).scrollIntoView({ behavior: 'smooth', block: 'start' });
+  window.showView = function (name, el) {
+    document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+    const target = document.getElementById('view-' + name);
+    if (target) target.classList.add('active');
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     if (el) el.classList.add('active');
+    if (name === 'settings') {
+      const emailEl = document.getElementById('settings-email');
+      if (emailEl) emailEl.textContent = (auth.currentUser && auth.currentUser.email) || '—';
+    }
   };
+
+  let statusChart = null, priceChart = null;
+  function renderCharts() {
+    const statusCanvas = document.getElementById('chart-status');
+    const priceCanvas  = document.getElementById('chart-price');
+    if (!statusCanvas || !priceCanvas || typeof Chart === 'undefined') return;
+
+    const counts = {
+      available: properties.filter(p => p.status === 'available').length,
+      reserved:  properties.filter(p => p.status === 'reserved').length,
+      sold:      properties.filter(p => p.status === 'sold').length
+    };
+
+    if (statusChart) statusChart.destroy();
+    statusChart = new Chart(statusCanvas.getContext('2d'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Available', 'Reserved', 'Sold'],
+        datasets: [{ data: [counts.available, counts.reserved, counts.sold], backgroundColor: ['#7fc69a', '#d4af6a', '#E74C3C'], borderWidth: 0 }]
+      },
+      options: { plugins: { legend: { labels: { color: '#8fa3c0' } } }, cutout: '60%' }
+    });
+
+    if (priceChart) priceChart.destroy();
+    priceChart = new Chart(priceCanvas.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: properties.map(p => p.address || 'Untitled'),
+        datasets: [{ label: 'Price (€)', data: properties.map(p => Number(p.price || 0)), backgroundColor: '#d4af6a', borderRadius: 4 }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: '#8fa3c0' }, grid: { display: false } },
+          y: { ticks: { color: '#8fa3c0' }, grid: { color: 'rgba(255,255,255,.06)' } }
+        }
+      }
+    });
+  }
 
   function renderProperties() {
     const tbody = document.getElementById('properties-tbody');
