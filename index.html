@@ -145,9 +145,10 @@ table.dtbl .blu{color:var(--blue)}
 .prop-card-photo img{width:100%;height:100%;object-fit:cover}
 .prop-card-photo .no-photo{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:0.8rem}
 .prop-card-badge{position:absolute;top:10px;right:10px;border-radius:4px;padding:3px 8px;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.prop-card-banner{position:absolute;bottom:0;left:0;right:0;padding:7px 12px;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;text-align:center}
 .badge-available{background:rgba(127,198,154,.2);color:#7fc69a;border:1px solid rgba(127,198,154,.3)}
-.badge-reserved{background:rgba(52,152,219,.2);color:#3498DB;border:1px solid rgba(52,152,219,.3)}
-.badge-sold{background:rgba(231,76,60,.15);color:#e57a6e;border:1px solid rgba(231,76,60,.2)}
+.badge-reserved{background:rgba(230,126,34,.65);color:#fff;backdrop-filter:blur(4px)}
+.badge-sold{background:rgba(231,76,60,.55);color:#fff;backdrop-filter:blur(4px)}
 .prop-card-body{padding:16px}
 .prop-card-price{font-size:1.25rem;font-weight:700;color:var(--text);margin-bottom:4px}
 .prop-card-addr{font-size:0.8rem;color:var(--dim);margin-bottom:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1186,6 +1187,8 @@ window.mobTab = function(tab){
   // Personal fields — editable by the signed-in client, auto-saved
   const PERSONAL_FIELDS = ['salary','appr','years','etf','renov'];
 
+  const ADMIN_EMAILS = ['ashunited18@gmail.com', 'adityasunil2010@gmail.com'];
+
   const _params    = new URLSearchParams(location.search);
   const clientId   = _params.get('client');
   const propertyId = _params.get('property');
@@ -1216,8 +1219,10 @@ window.mobTab = function(tab){
       const photo = Array.isArray(p.photos) && p.photos[0]
         ? `<img src="${p.photos[0]}" alt="" loading="lazy">`
         : `<div class="no-photo">No photo</div>`;
-      const badgeCls = p.status === 'sold' ? 'badge-sold' : p.status === 'reserved' ? 'badge-reserved' : 'badge-available';
       const badgeTxt = p.status ? (p.status.charAt(0).toUpperCase() + p.status.slice(1)) : 'Available';
+      const statusBadge = (p.status === 'reserved' || p.status === 'sold')
+        ? `<div class="prop-card-banner badge-${p.status}">${badgeTxt}</div>`
+        : `<span class="prop-card-badge badge-available">${badgeTxt}</span>`;
       const price = p.price ? '€' + Number(p.price).toLocaleString('de-DE') : '—';
       const addr  = [p.address, p.city].filter(Boolean).join(', ') || '—';
       const area  = p.area ? (Number(p.area).toLocaleString('de-DE') + ' m²') : '—';
@@ -1225,7 +1230,7 @@ window.mobTab = function(tab){
       const yield_ = (p.price && p.rent) ? ((p.rent * 12 / p.price * 100).toFixed(1) + '%') : '—';
       const year  = p.buildYear || '—';
       return `<div class="prop-card" onclick="location.href='?client=${clientId}&property=${id}'">
-        <div class="prop-card-photo">${photo}<span class="prop-card-badge ${badgeCls}">${badgeTxt}</span></div>
+        <div class="prop-card-photo">${photo}${statusBadge}</div>
         <div class="prop-card-body">
           <div class="prop-card-price">${price}</div>
           <div class="prop-card-addr">${addr}</div>
@@ -1452,10 +1457,11 @@ window.mobTab = function(tab){
     onAuthStateChanged(auth, async (user) => {
       if (!user) { document.getElementById('client-gate').style.display = 'flex'; revealPage(); return; }
       try {
+        const isAdmin = ADMIN_EMAILS.map(e => e.toLowerCase()).includes((user.email || '').toLowerCase());
         const snap = await getDoc(doc(db, 'clients', clientId));
-        if (!snap.exists()) { showGateError('This link is no longer valid.'); await signOut(auth); return; }
+        if (!snap.exists()) { showGateError('This link is no longer valid.'); if (!isAdmin) await signOut(auth); return; }
         const data = snap.data();
-        if ((data.email || '').toLowerCase() !== (user.email || '').toLowerCase()) {
+        if (!isAdmin && (data.email || '').toLowerCase() !== (user.email || '').toLowerCase()) {
           showGateError('This link is registered to a different email address. Please sign in with the account it was shared with.');
           await signOut(auth);
           return;

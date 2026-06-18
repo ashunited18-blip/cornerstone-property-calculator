@@ -177,14 +177,16 @@ td:first-child{font-weight:600}
 
     <div id="view-settings" class="view-section">
       <div class="section-title">Settings</div>
-      <div class="section-sub">Account &amp; access configuration</div>
+      <div class="section-sub">Manage admin access to this panel</div>
       <div class="chart-card" style="max-width:520px">
-        <h3>Admin Access</h3>
-        <p style="font-size:0.8rem;color:var(--dim);line-height:1.7">
-          Admin access is currently restricted to specific Google account emails, configured directly in
-          Firestore security rules (not editable from this screen yet).<br><br>
-          Signed in as: <strong style="color:var(--text)" id="settings-email">—</strong>
-        </p>
+        <h3>Admin Accounts</h3>
+        <p style="font-size:0.78rem;color:var(--dim);margin-bottom:14px">Owner accounts cannot be removed. Added admins have full panel access.</p>
+        <div id="admin-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px"></div>
+        <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center">
+          <input id="new-admin-email" type="email" placeholder="new.admin@gmail.com"
+            style="background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:0.82rem;padding:8px 10px;outline:none;width:100%">
+          <button onclick="addAdmin()" style="background:rgba(201,168,76,0.15);border:1px solid var(--border);border-radius:6px;color:var(--gold);font-size:0.82rem;padding:8px 14px;cursor:pointer;white-space:nowrap">+ Add</button>
+        </div>
       </div>
     </div>
   </div>
@@ -217,6 +219,12 @@ td:first-child{font-weight:600}
             <select id="prop-assign-client" style="background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:0.82rem;padding:7px 10px;outline:none;width:100%"><option value="">— Select a client to add —</option></select>
             <button onclick="addClientToProp()" style="background:rgba(201,168,76,0.15);border:1px solid var(--border);border-radius:6px;color:var(--gold);font-size:0.82rem;padding:7px 14px;cursor:pointer;white-space:nowrap">+ Add</button>
           </div>
+        </div>
+        <div id="prop-single-client-row" style="display:none;margin-bottom:14px">
+          <div style="color:var(--dim);font-size:0.78rem;margin-bottom:8px;font-weight:500;text-transform:uppercase;letter-spacing:.05em">Assigned Client</div>
+          <select id="prop-single-client" style="background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:0.82rem;padding:7px 10px;outline:none;width:100%">
+            <option value="">— Select a client —</option>
+          </select>
         </div>
         <div class="field-row"><label>Mode</label>
           <select id="prop-mode"><option value="altbau">Altbau</option><option value="neubau">Neubau</option></select>
@@ -286,7 +294,7 @@ td:first-child{font-weight:600}
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getFirestore, collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, arrayUnion, arrayRemove }
+  import { getFirestore, collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, setDoc, query, arrayUnion, arrayRemove }
     from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
   import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut }
     from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
@@ -303,6 +311,7 @@ td:first-child{font-weight:600}
     measurementId: "G-8VFJDDYHM1"
   };
   const ADMIN_EMAILS = ['ashunited18@gmail.com', 'adityasunil2010@gmail.com'];
+  let firestoreAdmins = []; // additional admins stored in Firestore config/admins
   let editingClientPropIds = []; // tracks property IDs while client modal is open
   let editingPropClientIds = []; // tracks client IDs while property modal is open
 
@@ -348,6 +357,24 @@ td:first-child{font-weight:600}
     editingPropClientIds = editingPropClientIds.filter(id => id !== cid);
     renderPropClientList();
   };
+
+  function renderPropSingleClientDropdown() {
+    const sel = document.getElementById('prop-single-client');
+    const current = editingPropClientIds[0] || '';
+    sel.innerHTML = '<option value="">— Select a client —</option>' +
+      clients.map(c => `<option value="${c.id}"${c.id === current ? ' selected' : ''}>${esc(c.name)}</option>`).join('');
+  }
+
+  function updatePropClientUI(status) {
+    const isMulti = status === 'available';
+    document.getElementById('prop-assign-row').style.display = isMulti ? '' : 'none';
+    document.getElementById('prop-single-client-row').style.display = isMulti ? 'none' : '';
+    if (!isMulti) renderPropSingleClientDropdown();
+  }
+
+  document.getElementById('prop-status').addEventListener('change', function () {
+    updatePropClientUI(this.value);
+  });
   const CALCULATOR_URL = location.origin + '/'; // property_calculator.html is served as index.html
 
   const app  = initializeApp(firebaseConfig);
@@ -379,7 +406,14 @@ td:first-child{font-weight:600}
 
   onAuthStateChanged(auth, async (user) => {
     const userEmail = (user && user.email || '').toLowerCase();
-    const isAuthorisedAdmin = !!user && ADMIN_EMAILS.map(e => e.toLowerCase()).includes(userEmail);
+    let isAuthorisedAdmin = !!user && ADMIN_EMAILS.map(e => e.toLowerCase()).includes(userEmail);
+    if (!isAuthorisedAdmin && user) {
+      try {
+        const admSnap = await getDoc(doc(db, 'config', 'admins'));
+        const extra = admSnap.exists() ? (admSnap.data().emails || []) : [];
+        isAuthorisedAdmin = extra.map(e => e.toLowerCase()).includes(userEmail);
+      } catch (_) {}
+    }
     if (!isAuthorisedAdmin) {
       hideBootLoader();
       document.getElementById('login-screen').style.display = 'flex';
@@ -404,10 +438,15 @@ td:first-child{font-weight:600}
     properties = propSnap.docs.map(d => ({ id: d.id, ...d.data() }));
     const clientSnap = await getDocs(query(collection(db, 'clients')));
     clients = clientSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    try {
+      const admSnap = await getDoc(doc(db, 'config', 'admins'));
+      firestoreAdmins = admSnap.exists() ? (admSnap.data().emails || []) : [];
+    } catch (_) { firestoreAdmins = []; }
     renderStats();
     renderProperties();
     renderClients();
     renderCharts();
+    renderAdminList();
   }
 
   function renderStats() {
@@ -439,6 +478,42 @@ td:first-child{font-weight:600}
   };
 
   let statusChart = null, priceChart = null;
+  function renderAdminList() {
+    const list = document.getElementById('admin-list');
+    if (!list) return;
+    const allAdmins = [
+      ...ADMIN_EMAILS.map(e => ({ email: e, permanent: true })),
+      ...firestoreAdmins.filter(e => !ADMIN_EMAILS.map(x => x.toLowerCase()).includes(e.toLowerCase())).map(e => ({ email: e, permanent: false }))
+    ];
+    list.innerHTML = allAdmins.map(({ email, permanent }) => `
+      <div style="display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:6px;padding:9px 12px;font-size:0.83rem">
+        <span style="color:var(--text)">${esc(email)}</span>
+        ${permanent
+          ? `<span style="font-size:0.72rem;color:var(--dim);padding:3px 8px;border:1px solid var(--border);border-radius:4px">Owner</span>`
+          : `<button onclick="removeAdmin('${esc(email)}')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:1rem;line-height:1;padding:0 4px">×</button>`}
+      </div>`).join('');
+  }
+
+  window.addAdmin = async function () {
+    const input = document.getElementById('new-admin-email');
+    const email = (input.value || '').trim().toLowerCase();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { alert('Enter a valid email address.'); return; }
+    if (ADMIN_EMAILS.map(e => e.toLowerCase()).includes(email) || firestoreAdmins.map(e => e.toLowerCase()).includes(email)) {
+      alert('This email is already an admin.'); return;
+    }
+    firestoreAdmins = [...firestoreAdmins, email];
+    await setDoc(doc(db, 'config', 'admins'), { emails: firestoreAdmins });
+    input.value = '';
+    renderAdminList();
+  };
+
+  window.removeAdmin = async function (email) {
+    if (!confirm(`Remove ${email} from admins?`)) return;
+    firestoreAdmins = firestoreAdmins.filter(e => e.toLowerCase() !== email.toLowerCase());
+    await setDoc(doc(db, 'config', 'admins'), { emails: firestoreAdmins });
+    renderAdminList();
+  };
+
   function renderCharts() {
     const statusCanvas = document.getElementById('chart-status');
     const priceCanvas  = document.getElementById('chart-price');
@@ -684,6 +759,7 @@ td:first-child{font-weight:600}
     document.getElementById('prop-mode').value = 'altbau';
     editingPropClientIds = [];
     renderPropClientList();
+    updatePropClientUI('available');
     currentPhotos = [];
     renderPhotoPreviews();
     document.getElementById('property-modal-backdrop').style.display = 'flex';
@@ -703,6 +779,7 @@ td:first-child{font-weight:600}
     const currentClient = clients.find(c => getClientPropIds(c).includes(id));
     editingPropClientIds = clients.filter(c => getClientPropIds(c).includes(id)).map(c => c.id);
     renderPropClientList();
+    updatePropClientUI(p.status || 'available');
     document.getElementById('property-modal-backdrop').style.display = 'flex';
   };
 
@@ -711,15 +788,20 @@ td:first-child{font-weight:600}
     const status = document.getElementById('prop-status').value;
     const needsClient = status === 'reserved' || status === 'sold';
 
-    // Auto-add whatever is selected in the dropdown (in case user didn't click + Add)
-    const addSel = document.getElementById('prop-assign-client');
-    if (addSel && addSel.value && !editingPropClientIds.includes(addSel.value)) {
-      editingPropClientIds.push(addSel.value);
-    }
-
-    if (needsClient && !editingPropClientIds.length) {
-      alert('Please assign at least one client for a ' + status + ' property.');
-      return;
+    if (needsClient) {
+      // Single-client mode: read from the dedicated single-client dropdown
+      const singleSel = document.getElementById('prop-single-client');
+      editingPropClientIds = singleSel && singleSel.value ? [singleSel.value] : [];
+      if (!editingPropClientIds.length) {
+        alert('Please assign a client for a ' + status + ' property.');
+        return;
+      }
+    } else {
+      // Multi-client mode: auto-add whatever is still selected in the add-dropdown
+      const addSel = document.getElementById('prop-assign-client');
+      if (addSel && addSel.value && !editingPropClientIds.includes(addSel.value)) {
+        editingPropClientIds.push(addSel.value);
+      }
     }
 
     const data = {
