@@ -254,7 +254,14 @@ td:first-child{font-weight:600}
     <input type="hidden" id="client-form-id">
     <div class="field-row"><label>Name</label><input id="client-form-name" placeholder="Müller Family"></div>
     <div class="field-row"><label>Email (Google)</label><input id="client-form-email" placeholder="client@gmail.com"></div>
-    <div class="field-row"><label>Assigned Property</label><select id="client-form-property"></select></div>
+    <div style="margin-bottom:14px">
+      <div style="color:var(--dim);font-size:0.78rem;margin-bottom:8px;font-weight:500;text-transform:uppercase;letter-spacing:.05em">Assigned Properties</div>
+      <div id="client-prop-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;min-height:0"></div>
+      <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center">
+        <select id="client-prop-add-select" style="background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:0.82rem;padding:7px 10px;outline:none;width:100%"><option value="">— Select a property to add —</option></select>
+        <button onclick="addPropertyToClient()" style="background:rgba(201,168,76,0.15);border:1px solid var(--border);border-radius:6px;color:var(--gold);font-size:0.82rem;padding:7px 14px;cursor:pointer;white-space:nowrap">+ Add</button>
+      </div>
+    </div>
     <div class="field-row"><label>Annual Salary (€)</label><input id="client-form-salary" type="number" value="60000"></div>
     <div class="field-row"><label>Tax Class</label>
       <select id="client-form-taxclass"><option value="1">Class 1</option><option value="3">Class 3</option><option value="4">Class 4</option></select>
@@ -272,7 +279,7 @@ td:first-child{font-weight:600}
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getFirestore, collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query }
+  import { getFirestore, collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, arrayUnion, arrayRemove }
     from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
   import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut }
     from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
@@ -289,6 +296,13 @@ td:first-child{font-weight:600}
     measurementId: "G-8VFJDDYHM1"
   };
   const ADMIN_EMAILS = ['ashunited18@gmail.com', 'adityasunil2010@gmail.com'];
+  let editingClientPropIds = []; // tracks property IDs while client modal is open
+
+  // Backward-compat: supports both old assignedPropertyId (string) and new assignedPropertyIds (array)
+  function getClientPropIds(c) {
+    if (Array.isArray(c.assignedPropertyIds)) return c.assignedPropertyIds.filter(Boolean);
+    return c.assignedPropertyId ? [c.assignedPropertyId] : [];
+  }
   const CALCULATOR_URL = location.origin + '/'; // property_calculator.html is served as index.html
 
   const app  = initializeApp(firebaseConfig);
@@ -424,7 +438,7 @@ td:first-child{font-weight:600}
     const tbody = document.getElementById('properties-tbody');
     if (!properties.length) { tbody.innerHTML = '<tr><td colspan="8" style="color:var(--dim)">No properties yet.</td></tr>'; return; }
     tbody.innerHTML = properties.map(p => {
-      const assignedClients = clients.filter(c => c.assignedPropertyId === p.id);
+      const assignedClients = clients.filter(c => getClientPropIds(c).includes(p.id));
       const names = assignedClients.length ? assignedClients.map(c => c.name).join(', ') : '—';
       const thumb = (Array.isArray(p.photos) && p.photos[0])
         ? `<img src="${p.photos[0]}" style="width:42px;height:42px;border-radius:5px;object-fit:cover">`
@@ -446,22 +460,58 @@ td:first-child{font-weight:600}
     const tbody = document.getElementById('clients-tbody');
     if (!clients.length) { tbody.innerHTML = '<tr><td colspan="5" style="color:var(--dim)">No clients yet.</td></tr>'; return; }
     tbody.innerHTML = clients.map(c => {
-      const prop = properties.find(p => p.id === c.assignedPropertyId);
-      const propLabel = prop ? (prop.address + ', ' + prop.city) : '—';
+      const propIds = getClientPropIds(c);
+      const propLabels = propIds.map(pid => {
+        const p = properties.find(x => x.id === pid);
+        return p ? (p.address + ', ' + p.city) : pid;
+      });
+      const propLabel = propLabels.length ? propLabels.join(' | ') : '—';
       return `<tr>
         <td>${esc(c.name || '—')}</td>
         <td>${esc(c.email || '—')}</td>
-        <td>${esc(propLabel)}</td>
+        <td style="font-size:0.78rem">${esc(propLabel)}</td>
         <td>${c.savedAt ? new Date(c.savedAt).toLocaleString('de-DE') : '—'}</td>
         <td><button class="action-link" onclick="editClient('${c.id}')">Edit</button> <button class="action-link" onclick="copyClientLinkAdmin('${c.id}')">Copy Link</button> <button class="action-link" style="color:var(--red);border-color:rgba(231,76,60,0.3)" onclick="deleteClient('${c.id}')">Delete</button></td>
       </tr>`;
     }).join('');
   }
 
-  function renderPropertyDropdown() {
-    const sel = document.getElementById('client-form-property');
-    sel.innerHTML = properties.map(p => `<option value="${p.id}">${esc(p.address)}, ${esc(p.city)}</option>`).join('');
+  function renderClientPropAddDropdown() {
+    const sel = document.getElementById('client-prop-add-select');
+    const unassigned = properties.filter(p => !editingClientPropIds.includes(p.id));
+    sel.innerHTML = '<option value="">— Select a property to add —</option>' +
+      unassigned.map(p => `<option value="${p.id}">${esc(p.address)}, ${esc(p.city)}</option>`).join('');
   }
+
+  function renderClientPropertyList() {
+    const list = document.getElementById('client-prop-list');
+    if (!editingClientPropIds.length) {
+      list.innerHTML = '<div style="color:var(--dim);font-size:0.8rem;padding:6px 0">No properties assigned yet.</div>';
+    } else {
+      list.innerHTML = editingClientPropIds.map(pid => {
+        const p = properties.find(x => x.id === pid);
+        const label = p ? `${p.address}, ${p.city}` : pid;
+        return `<div style="display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:0.82rem">
+          <span>${esc(label)}</span>
+          <button onclick="removePropertyFromClient('${pid}')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:1rem;line-height:1;padding:0 4px">×</button>
+        </div>`;
+      }).join('');
+    }
+    renderClientPropAddDropdown();
+  }
+
+  window.addPropertyToClient = function () {
+    const sel = document.getElementById('client-prop-add-select');
+    const pid = sel.value;
+    if (!pid || editingClientPropIds.includes(pid)) return;
+    editingClientPropIds.push(pid);
+    renderClientPropertyList();
+  };
+
+  window.removePropertyFromClient = function (pid) {
+    editingClientPropIds = editingClientPropIds.filter(id => id !== pid);
+    renderClientPropertyList();
+  };
 
   function renderPropAssignDropdown(selectedClientId) {
     const sel = document.getElementById('prop-assign-client');
@@ -616,7 +666,7 @@ td:first-child{font-weight:600}
     if (p['kfw-ir'] !== undefined) document.getElementById('prop-kfw-ir').value = p['kfw-ir'];
     currentPhotos = Array.isArray(p.photos) ? p.photos.slice() : [];
     renderPhotoPreviews();
-    const currentClient = clients.find(c => c.assignedPropertyId === id);
+    const currentClient = clients.find(c => getClientPropIds(c).includes(id));
     document.getElementById('prop-assign-row').style.display = (p.status === 'reserved' || p.status === 'sold') ? 'grid' : 'none';
     if (document.getElementById('prop-assign-row').style.display === 'grid') {
       renderPropAssignDropdown(currentClient ? currentClient.id : '');
@@ -669,16 +719,16 @@ td:first-child{font-weight:600}
       propertyId = ref.id;
     }
 
-    // Sync the client assignment: whoever is selected (if reserved/sold) becomes the
-    // only client pointing at this property; anyone else previously assigned gets cleared.
-    const previouslyAssigned = clients.filter(c => c.assignedPropertyId === propertyId);
-    for (const c of previouslyAssigned) {
-      if (c.id !== selectedClientId) {
-        await updateDoc(doc(db, 'clients', c.id), { assignedPropertyId: '' });
+    // Sync client assignment via the property edit modal.
+    // When a property changes to available, remove it from all clients' portfolios.
+    // When assigned to a client, add it to their assignedPropertyIds array.
+    const previouslyAssigned = clients.filter(c => getClientPropIds(c).includes(propertyId));
+    if (!needsClient) {
+      for (const c of previouslyAssigned) {
+        await updateDoc(doc(db, 'clients', c.id), { assignedPropertyIds: arrayRemove(propertyId) });
       }
-    }
-    if (needsClient && selectedClientId) {
-      await updateDoc(doc(db, 'clients', selectedClientId), { assignedPropertyId: propertyId });
+    } else if (selectedClientId) {
+      await updateDoc(doc(db, 'clients', selectedClientId), { assignedPropertyIds: arrayUnion(propertyId) });
     }
 
     closePropertyModal();
@@ -695,6 +745,8 @@ td:first-child{font-weight:600}
     document.getElementById('client-form-salary').value = 60000;
     document.getElementById('client-form-taxclass').value = '1';
     document.getElementById('client-result-box').style.display = 'none';
+    editingClientPropIds = [];
+    renderClientPropertyList();
     document.getElementById('client-modal-backdrop').style.display = 'flex';
   };
   window.closeClientModal = function () { document.getElementById('client-modal-backdrop').style.display = 'none'; };
@@ -707,10 +759,11 @@ td:first-child{font-weight:600}
     document.getElementById('client-form-id').value = id;
     document.getElementById('client-form-name').value = c.name || '';
     document.getElementById('client-form-email').value = c.email || '';
-    document.getElementById('client-form-property').value = c.assignedPropertyId || '';
     document.getElementById('client-form-salary').value = c.salary || 60000;
     document.getElementById('client-form-taxclass').value = c.taxClass || '1';
     document.getElementById('client-result-box').style.display = 'none';
+    editingClientPropIds = [...getClientPropIds(c)];
+    renderClientPropertyList();
     document.getElementById('client-modal-backdrop').style.display = 'flex';
   };
 
@@ -718,36 +771,20 @@ td:first-child{font-weight:600}
     const id = document.getElementById('client-form-id').value;
     const name = document.getElementById('client-form-name').value || 'Unnamed Client';
     const email = document.getElementById('client-form-email').value.trim().toLowerCase();
-    const propertyId = document.getElementById('client-form-property').value;
-    if (!email || !propertyId) { alert('Email and assigned property are required.'); return; }
-
-    const assignedProperty = properties.find(p => p.id === propertyId);
-    if (assignedProperty && (assignedProperty.status === 'reserved' || assignedProperty.status === 'sold')) {
-      const otherClients = clients.filter(c => c.assignedPropertyId === propertyId && c.id !== id);
-      if (otherClients.length > 0) {
-        const proceed = confirm(
-          'This property is marked ' + assignedProperty.status + ' and already has ' +
-          otherClients.map(c => c.name).join(', ') + ' assigned. A ' + assignedProperty.status +
-          ' property should normally have only one client. Continue anyway?'
-        );
-        if (!proceed) return;
-      }
-    }
+    if (!email) { alert('Email is required.'); return; }
 
     const baseData = {
-      name, email, assignedPropertyId: propertyId,
+      name, email,
+      assignedPropertyIds: editingClientPropIds,
       salary: Number(document.getElementById('client-form-salary').value),
       taxClass: document.getElementById('client-form-taxclass').value
     };
 
     if (id) {
-      // Update only the admin-controlled fields - leaves the client's own personal
-      // preferences (renov, kirche, appr, years, etf) untouched.
       baseData.updatedAt = new Date().toISOString();
       await updateDoc(doc(db, 'clients', id), baseData);
       closeClientModal();
     } else {
-      baseData.renov = Number((assignedProperty && assignedProperty.renov) || 0);
       baseData.kirche = false; baseData.appr = 2.0; baseData.years = 10; baseData.etf = 7.0;
       baseData.createdAt = new Date().toISOString();
       const ref = await addDoc(collection(db, 'clients'), baseData);
@@ -766,7 +803,7 @@ td:first-child{font-weight:600}
 
   window.deleteProperty = async function (id) {
     const p = properties.find(x => x.id === id);
-    const assignedCount = clients.filter(c => c.assignedPropertyId === id).length;
+    const assignedCount = clients.filter(c => getClientPropIds(c).includes(id)).length;
     let msg = 'Delete property "' + (p ? p.address : id) + '"? This cannot be undone.';
     if (assignedCount > 0) msg += '\n\n' + assignedCount + ' client(s) are assigned to this property and will lose access.';
     if (!confirm(msg)) return;
