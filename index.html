@@ -1367,10 +1367,9 @@ window.mobTab = function(tab){
 
     // Determine which property to load into the calculator
     let targetPropId = propertyId; // from ?property= URL param
-    if (!targetPropId && propIds.length === 1) targetPropId = propIds[0]; // auto-select if only one
 
-    if (!targetPropId && propIds.length > 1) {
-      // Multiple properties, no specific one selected → show the portal
+    if (!targetPropId && propIds.length >= 1) {
+      // No specific property selected → always show the portal card grid
       const fetches = await Promise.all(propIds.map(pid => getDoc(doc(db, 'properties', pid))));
       const propDataList = fetches
         .map((s, i) => ({ id: propIds[i], p: s.exists() ? s.data() : null }))
