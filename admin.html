@@ -780,19 +780,25 @@ td:first-child{font-weight:600}
       taxClass: document.getElementById('client-form-taxclass').value
     };
 
-    if (id) {
-      baseData.updatedAt = new Date().toISOString();
-      await updateDoc(doc(db, 'clients', id), baseData);
-      closeClientModal();
-    } else {
-      baseData.kirche = false; baseData.appr = 2.0; baseData.years = 10; baseData.etf = 7.0;
-      baseData.createdAt = new Date().toISOString();
-      const ref = await addDoc(collection(db, 'clients'), baseData);
-      const url = CALCULATOR_URL + '?client=' + ref.id;
-      document.getElementById('client-result-link').value = url;
-      document.getElementById('client-result-box').style.display = 'flex';
+    try {
+      if (id) {
+        baseData.updatedAt = new Date().toISOString();
+        console.log('Saving client', id, 'with assignedPropertyIds:', baseData.assignedPropertyIds);
+        await updateDoc(doc(db, 'clients', id), baseData);
+        closeClientModal();
+      } else {
+        baseData.kirche = false; baseData.appr = 2.0; baseData.years = 10; baseData.etf = 7.0;
+        baseData.createdAt = new Date().toISOString();
+        const ref = await addDoc(collection(db, 'clients'), baseData);
+        const url = CALCULATOR_URL + '?client=' + ref.id;
+        document.getElementById('client-result-link').value = url;
+        document.getElementById('client-result-box').style.display = 'flex';
+      }
+      await refreshAll();
+    } catch (e) {
+      console.error('saveClientRecord failed:', e);
+      alert('Save failed: ' + e.message);
     }
-    await refreshAll();
   };
 
   window.copyClientLinkAdmin = function (id) {
