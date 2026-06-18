@@ -781,6 +781,13 @@ td:first-child{font-weight:600}
       taxClass: document.getElementById('client-form-taxclass').value
     };
 
+    // Auto-add whatever is currently selected in the dropdown (in case user forgot to click + Add)
+    const addSel = document.getElementById('client-prop-add-select');
+    if (addSel && addSel.value && !editingClientPropIds.includes(addSel.value)) {
+      editingClientPropIds.push(addSel.value);
+    }
+    baseData.assignedPropertyIds = editingClientPropIds;
+
     try {
       if (id) {
         baseData.updatedAt = new Date().toISOString();
