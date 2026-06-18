@@ -1,11 +1,59 @@
-// Vercel serverless function — proxies a Claude API call so the API key
-// never has to live in browser JS. Receives raw text extracted client-side
-// from an uploaded PDF/Word document, asks Claude to pull out whatever
-// property fields it can find, and returns structured JSON.
+import { createVerify } from 'crypto';
+
+const PROJECT_ID = 'cornerstone-calculator';
+const ADMIN_EMAILS = ['ashunited18@gmail.com', 'adityasunil2010@gmail.com'];
+
+// Verifies a Firebase ID token using Google's public keys (no firebase-admin needed).
+async function verifyFirebaseIdToken(idToken) {
+  const parts = idToken.split('.');
+  if (parts.length !== 3) throw new Error('Malformed token');
+
+  const [headerB64, payloadB64, signatureB64] = parts;
+  const header  = JSON.parse(Buffer.from(headerB64,  'base64url').toString());
+  const payload = JSON.parse(Buffer.from(payloadB64, 'base64url').toString());
+
+  const now = Math.floor(Date.now() / 1000);
+  if (payload.exp < now)          throw new Error('Token expired');
+  if (payload.iat > now + 300)    throw new Error('Token from future');
+  if (payload.aud !== PROJECT_ID) throw new Error('Wrong audience');
+  if (payload.iss !== `https://securetoken.google.com/${PROJECT_ID}`) throw new Error('Wrong issuer');
+  if (!payload.sub)               throw new Error('Missing subject');
+
+  const certsRes = await fetch('https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com');
+  const certs = await certsRes.json();
+  const cert = certs[header.kid];
+  if (!cert) throw new Error('Unknown signing key');
+
+  const verifier = createVerify('RSA-SHA256');
+  verifier.update(`${headerB64}.${payloadB64}`);
+  if (!verifier.verify(cert, Buffer.from(signatureB64, 'base64url')))
+    throw new Error('Invalid signature');
+
+  return payload;
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
+    return;
+  }
+
+  // Verify Firebase ID token from Authorization header
+  const authHeader = req.headers['authorization'] || '';
+  const idToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  if (!idToken) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
+  try {
+    const payload = await verifyFirebaseIdToken(idToken);
+    const email = (payload.email || '').toLowerCase();
+    if (!ADMIN_EMAILS.map(e => e.toLowerCase()).includes(email)) {
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+  } catch (e) {
+    res.status(401).json({ error: 'Invalid token' });
     return;
   }
 
@@ -21,7 +69,6 @@ export default async function handler(req, res) {
     return;
   }
 
-  // Cap input size to keep cost/latency predictable
   const trimmedText = text.slice(0, 20000);
 
   const schemaDescription = `
@@ -55,14 +102,14 @@ Use null for any field you cannot find - never guess or invent a value.
           input_schema: {
             type: 'object',
             properties: {
-              address: { type: ['string', 'null'] },
-              city: { type: ['string', 'null'] },
+              address:   { type: ['string', 'null'] },
+              city:      { type: ['string', 'null'] },
               buildYear: { type: ['string', 'null'] },
-              mode: { type: ['string', 'null'], enum: ['altbau', 'neubau', null] },
-              price: { type: ['number', 'null'] },
-              rent: { type: ['number', 'null'] },
-              area: { type: ['number', 'null'] },
-              build: { type: ['number', 'null'] }
+              mode:      { type: ['string', 'null'], enum: ['altbau', 'neubau', null] },
+              price:     { type: ['number', 'null'] },
+              rent:      { type: ['number', 'null'] },
+              area:      { type: ['number', 'null'] },
+              build:     { type: ['number', 'null'] }
             },
             required: ['address', 'city', 'buildYear', 'mode', 'price', 'rent', 'area', 'build']
           }

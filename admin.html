@@ -561,9 +561,10 @@ td:first-child{font-weight:600}
         return;
       }
       setDocStatus('Analysing with AI…');
+      const idToken = await auth.currentUser.getIdToken();
       const resp = await fetch('/api/extract-property', {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers: { 'content-type': 'application/json', 'Authorization': `Bearer ${idToken}` },
         body: JSON.stringify({ text })
       });
       const result = await resp.json();
