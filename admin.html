@@ -502,8 +502,10 @@ td:first-child{font-weight:600}
   window.addPropertyToClient = function () {
     const sel = document.getElementById('client-prop-add-select');
     const pid = sel.value;
+    console.log('addPropertyToClient called, pid:', pid, 'current list:', editingClientPropIds);
     if (!pid || editingClientPropIds.includes(pid)) return;
     editingClientPropIds.push(pid);
+    console.log('after push:', editingClientPropIds);
     renderClientPropertyList();
   };
 
