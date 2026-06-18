@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cornerstone Admin</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.7.0/mammoth.browser.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -195,6 +197,11 @@ td:first-child{font-weight:600}
     <button class="modal-close" onclick="closePropertyModal()" aria-label="Close">✕</button>
     <h3 id="property-modal-title">Add Property</h3>
     <input type="hidden" id="prop-id">
+    <div style="background:rgba(212,175,106,.06);border:1px dashed var(--border);border-radius:8px;padding:14px;margin-bottom:16px">
+      <label style="font-size:0.76rem;color:var(--gold-bright);font-weight:600;display:block;margin-bottom:6px">📄 Auto-fill from Exposé (PDF or Word)</label>
+      <input type="file" id="prop-doc-upload" accept=".pdf,.doc,.docx" style="font-size:0.76rem;color:var(--dim)">
+      <div id="prop-doc-status" style="font-size:0.74rem;color:var(--dim);margin-top:8px;display:none"></div>
+    </div>
     <div class="grid2">
       <div>
         <div class="field-row"><label>Address</label><input id="prop-address" placeholder="Asamstrasse WE3"></div>
@@ -269,6 +276,8 @@ td:first-child{font-weight:600}
     from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
   import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut }
     from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { initializeAppCheck, ReCaptchaV3Provider }
+    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDsIOcurloVs2Nn8eYWocjo480bCtKieVQ",
@@ -283,6 +292,10 @@ td:first-child{font-weight:600}
   const CALCULATOR_URL = location.origin + '/'; // property_calculator.html is served as index.html
 
   const app  = initializeApp(firebaseConfig);
+  initializeAppCheck(app, {
+    provider: new ReCaptchaV3Provider('6LcUlSYtAAAAAN2d8ETZO9wKjcAL3MtECcAqM3nT'),
+    isTokenAutoRefreshEnabled: true
+  });
   const db   = getFirestore(app);
   const auth = getAuth(app);
 
@@ -510,9 +523,78 @@ td:first-child{font-weight:600}
     e.target.value = '';
   });
 
+  function setDocStatus(msg, isError) {
+    const el = document.getElementById('prop-doc-status');
+    el.style.display = 'block';
+    el.textContent = msg;
+    el.style.color = isError ? 'var(--red)' : 'var(--dim)';
+  }
+
+  async function extractTextFromFile(file) {
+    if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+      const buf = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+      let text = '';
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        text += content.items.map(it => it.str).join(' ') + '\n';
+      }
+      return text;
+    } else {
+      // .doc / .docx via mammoth
+      const buf = await file.arrayBuffer();
+      const result = await mammoth.extractRawText({ arrayBuffer: buf });
+      return result.value;
+    }
+  }
+
+  document.getElementById('prop-doc-upload').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      setDocStatus('Reading document…');
+      const text = await extractTextFromFile(file);
+      if (!text || text.trim().length < 20) {
+        setDocStatus('Could not read enough text from this file.', true);
+        return;
+      }
+      setDocStatus('Analysing with AI…');
+      const resp = await fetch('/api/extract-property', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ text })
+      });
+      const result = await resp.json();
+      if (!resp.ok || !result.fields) {
+        setDocStatus(result.error || 'Extraction failed.', true);
+        return;
+      }
+      const f = result.fields;
+      const filled = [];
+      if (f.address)   { document.getElementById('prop-address').value = f.address; filled.push('Address'); }
+      if (f.city)       { document.getElementById('prop-city').value = f.city; filled.push('City'); }
+      if (f.buildYear)  { document.getElementById('prop-buildYear').value = f.buildYear; filled.push('Build Year'); }
+      if (f.mode)        { document.getElementById('prop-mode').value = f.mode; filled.push('Mode'); }
+      if (f.price != null) { document.getElementById('prop-price').value = f.price; filled.push('Price'); }
+      if (f.rent != null)  { document.getElementById('prop-rent').value = f.rent; filled.push('Rent'); }
+      if (f.area != null)  { document.getElementById('prop-area').value = f.area; filled.push('Area'); }
+      if (f.build != null) { document.getElementById('prop-build').value = f.build; filled.push('Building %'); }
+
+      setDocStatus(filled.length ? ('✓ Auto-filled: ' + filled.join(', ') + '. Please review and complete the rest.') : 'No matching fields found in this document.');
+    } catch (err) {
+      console.error(err);
+      setDocStatus('Something went wrong reading this file.', true);
+    } finally {
+      e.target.value = '';
+    }
+  });
+
   window.openPropertyModal = function () {
     document.getElementById('property-modal-title').textContent = 'Add Property';
     document.getElementById('prop-id').value = '';
+    document.getElementById('prop-doc-status').style.display = 'none';
     ['address','city','buildYear'].forEach(f => document.getElementById('prop-' + f).value = '');
     document.getElementById('prop-status').value = 'available';
     document.getElementById('prop-mode').value = 'altbau';

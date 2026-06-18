@@ -1119,6 +1119,8 @@ window.mobTab = function(tab){
   import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
   import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut }
     from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { initializeAppCheck, ReCaptchaV3Provider }
+    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDsIOcurloVs2Nn8eYWocjo480bCtKieVQ",
@@ -1131,6 +1133,10 @@ window.mobTab = function(tab){
   };
 
   const app  = initializeApp(firebaseConfig);
+  initializeAppCheck(app, {
+    provider: new ReCaptchaV3Provider('6LcUlSYtAAAAAN2d8ETZO9wKjcAL3MtECcAqM3nT'),
+    isTokenAutoRefreshEnabled: true
+  });
   const db   = getFirestore(app);
   const auth = getAuth(app);
 
