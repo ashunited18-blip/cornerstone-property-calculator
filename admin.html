@@ -208,9 +208,16 @@ td:first-child{font-weight:600}
         <div class="field-row"><label>City</label><input id="prop-city" placeholder="Ingolstadt"></div>
         <div class="field-row"><label>Build Year</label><input id="prop-buildYear" placeholder="1934"></div>
         <div class="field-row"><label>Status</label>
-          <select id="prop-status" onchange="toggleAssignRow()"><option value="available">Available</option><option value="reserved">Reserved</option><option value="sold">Sold</option></select>
+          <select id="prop-status"><option value="available">Available</option><option value="reserved">Reserved</option><option value="sold">Sold</option></select>
         </div>
-        <div class="field-row" id="prop-assign-row" style="display:none"><label>Assign to Client</label><select id="prop-assign-client"><option value="">— Select client —</option></select></div>
+        <div id="prop-assign-row" style="margin-bottom:14px">
+          <div style="color:var(--dim);font-size:0.78rem;margin-bottom:8px;font-weight:500;text-transform:uppercase;letter-spacing:.05em">Assigned Clients</div>
+          <div id="prop-client-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;min-height:0"></div>
+          <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center">
+            <select id="prop-assign-client" style="background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:0.82rem;padding:7px 10px;outline:none;width:100%"><option value="">— Select a client to add —</option></select>
+            <button onclick="addClientToProp()" style="background:rgba(201,168,76,0.15);border:1px solid var(--border);border-radius:6px;color:var(--gold);font-size:0.82rem;padding:7px 14px;cursor:pointer;white-space:nowrap">+ Add</button>
+          </div>
+        </div>
         <div class="field-row"><label>Mode</label>
           <select id="prop-mode"><option value="altbau">Altbau</option><option value="neubau">Neubau</option></select>
         </div>
@@ -297,12 +304,50 @@ td:first-child{font-weight:600}
   };
   const ADMIN_EMAILS = ['ashunited18@gmail.com', 'adityasunil2010@gmail.com'];
   let editingClientPropIds = []; // tracks property IDs while client modal is open
+  let editingPropClientIds = []; // tracks client IDs while property modal is open
 
   // Backward-compat: supports both old assignedPropertyId (string) and new assignedPropertyIds (array)
   function getClientPropIds(c) {
     if (Array.isArray(c.assignedPropertyIds)) return c.assignedPropertyIds.filter(Boolean);
     return c.assignedPropertyId ? [c.assignedPropertyId] : [];
   }
+
+  function renderPropClientAddDropdown() {
+    const sel = document.getElementById('prop-assign-client');
+    const unassigned = clients.filter(c => !editingPropClientIds.includes(c.id));
+    sel.innerHTML = '<option value="">— Select a client to add —</option>' +
+      unassigned.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  }
+
+  function renderPropClientList() {
+    const list = document.getElementById('prop-client-list');
+    if (!editingPropClientIds.length) {
+      list.innerHTML = '<div style="color:var(--dim);font-size:0.8rem;padding:6px 0">No clients assigned yet.</div>';
+    } else {
+      list.innerHTML = editingPropClientIds.map(cid => {
+        const c = clients.find(x => x.id === cid);
+        const label = c ? c.name : cid;
+        return `<div style="display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:0.82rem">
+          <span>${esc(label)}</span>
+          <button onclick="removeClientFromProp('${cid}')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:1rem;line-height:1;padding:0 4px">×</button>
+        </div>`;
+      }).join('');
+    }
+    renderPropClientAddDropdown();
+  }
+
+  window.addClientToProp = function () {
+    const sel = document.getElementById('prop-assign-client');
+    const cid = sel.value;
+    if (!cid || editingPropClientIds.includes(cid)) return;
+    editingPropClientIds.push(cid);
+    renderPropClientList();
+  };
+
+  window.removeClientFromProp = function (cid) {
+    editingPropClientIds = editingPropClientIds.filter(id => id !== cid);
+    renderPropClientList();
+  };
   const CALCULATOR_URL = location.origin + '/'; // property_calculator.html is served as index.html
 
   const app  = initializeApp(firebaseConfig);
@@ -514,16 +559,6 @@ td:first-child{font-weight:600}
     renderClientPropertyList();
   };
 
-  function renderPropAssignDropdown(selectedClientId) {
-    const sel = document.getElementById('prop-assign-client');
-    sel.innerHTML = '<option value="">— Select client —</option>' +
-      clients.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
-    sel.value = selectedClientId || '';
-  }
-
-  window.toggleAssignRow = function () {
-    renderPropAssignDropdown(document.getElementById('prop-assign-client').value);
-  };
 
   function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
@@ -647,8 +682,8 @@ td:first-child{font-weight:600}
     ['address','city','buildYear'].forEach(f => document.getElementById('prop-' + f).value = '');
     document.getElementById('prop-status').value = 'available';
     document.getElementById('prop-mode').value = 'altbau';
-    document.getElementById('prop-assign-row').style.display = 'grid';
-    renderPropAssignDropdown('');
+    editingPropClientIds = [];
+    renderPropClientList();
     currentPhotos = [];
     renderPhotoPreviews();
     document.getElementById('property-modal-backdrop').style.display = 'flex';
@@ -666,8 +701,8 @@ td:first-child{font-weight:600}
     currentPhotos = Array.isArray(p.photos) ? p.photos.slice() : [];
     renderPhotoPreviews();
     const currentClient = clients.find(c => getClientPropIds(c).includes(id));
-    document.getElementById('prop-assign-row').style.display = 'grid';
-    renderPropAssignDropdown(currentClient ? currentClient.id : '');
+    editingPropClientIds = clients.filter(c => getClientPropIds(c).includes(id)).map(c => c.id);
+    renderPropClientList();
     document.getElementById('property-modal-backdrop').style.display = 'flex';
   };
 
@@ -675,10 +710,15 @@ td:first-child{font-weight:600}
     const id = document.getElementById('prop-id').value;
     const status = document.getElementById('prop-status').value;
     const needsClient = status === 'reserved' || status === 'sold';
-    const selectedClientId = document.getElementById('prop-assign-client').value;
 
-    if (needsClient && !selectedClientId) {
-      alert('Please select which client this property is ' + status + ' to.');
+    // Auto-add whatever is selected in the dropdown (in case user didn't click + Add)
+    const addSel = document.getElementById('prop-assign-client');
+    if (addSel && addSel.value && !editingPropClientIds.includes(addSel.value)) {
+      editingPropClientIds.push(addSel.value);
+    }
+
+    if (needsClient && !editingPropClientIds.length) {
+      alert('Please assign at least one client for a ' + status + ' property.');
       return;
     }
 
@@ -716,16 +756,15 @@ td:first-child{font-weight:600}
       propertyId = ref.id;
     }
 
-    // Sync client assignment via the property edit modal.
-    // When a property changes to available, remove it from all clients' portfolios.
-    // When assigned to a client, add it to their assignedPropertyIds array.
+    // Sync client assignments: add property to newly assigned clients, remove from unassigned ones
     const previouslyAssigned = clients.filter(c => getClientPropIds(c).includes(propertyId));
-    if (!needsClient) {
-      for (const c of previouslyAssigned) {
-        await updateDoc(doc(db, 'clients', c.id), { assignedPropertyIds: arrayRemove(propertyId) });
-      }
-    } else if (selectedClientId) {
-      await updateDoc(doc(db, 'clients', selectedClientId), { assignedPropertyIds: arrayUnion(propertyId) });
+    const toRemove = previouslyAssigned.filter(c => !editingPropClientIds.includes(c.id));
+    const toAdd    = editingPropClientIds.filter(cid => !previouslyAssigned.find(c => c.id === cid));
+    for (const c of toRemove) {
+      await updateDoc(doc(db, 'clients', c.id), { assignedPropertyIds: arrayRemove(propertyId) });
+    }
+    for (const cid of toAdd) {
+      await updateDoc(doc(db, 'clients', cid), { assignedPropertyIds: arrayUnion(propertyId) });
     }
 
     closePropertyModal();
