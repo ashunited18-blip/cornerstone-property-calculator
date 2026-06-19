@@ -149,6 +149,9 @@ table.dtbl .blu{color:var(--blue)}
 .badge-available{background:rgba(127,198,154,.2);color:#7fc69a;border:1px solid rgba(127,198,154,.3)}
 .badge-reserved{background:rgba(230,126,34,.65);color:#fff;backdrop-filter:blur(4px)}
 .badge-sold{background:rgba(231,76,60,.55);color:#fff;backdrop-filter:blur(4px)}
+.energy-badge{position:absolute;top:10px;left:10px;border-radius:4px;padding:3px 8px;font-size:0.7rem;font-weight:700;letter-spacing:.04em;color:#fff}
+.energy-Ap{background:#1a9c3e}.energy-A{background:#5cb85c}.energy-B{background:#8bc34a}.energy-C{background:#cddc39;color:#333}
+.energy-D{background:#ffc107;color:#333}.energy-E{background:#ff9800}.energy-F{background:#f44336}.energy-G{background:#c62828}.energy-H{background:#7b1fa2}
 .prop-card-body{padding:16px}
 .prop-card-price{font-size:1.25rem;font-weight:700;color:var(--text);margin-bottom:4px}
 .prop-card-addr{font-size:0.8rem;color:var(--dim);margin-bottom:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -208,6 +211,7 @@ table.dtbl .blu{color:var(--blue)}
 <!-- Locked-property banner — shown only in client mode after successful sign-in -->
 <div id="locked-note" style="display:none;background:rgba(231,76,60,0.08);border-bottom:1px solid rgba(231,76,60,0.2);padding:9px 24px;font-size:0.74rem;color:#e8a0a0;align-items:center;gap:8px">
   <span>🔒</span><span>Property financials are set by Cornerstone. You can adjust your personal tax &amp; investment preferences below.</span>
+  <span id="locked-energy-class" style="display:none;font-size:0.7rem;padding:2px 8px;border-radius:4px;font-weight:700"></span>
   <a id="back-to-portfolio" href="#" style="display:none;margin-left:16px;color:var(--gold);font-size:0.75rem;text-decoration:none;white-space:nowrap">← My Properties</a>
   <span id="client-mode-name" style="margin-left:auto;color:var(--dim);font-size:0.7rem"></span>
 </div>
@@ -247,10 +251,10 @@ table.dtbl .blu{color:var(--blue)}
     <div id="photo-dots-mini" style="display:none;position:absolute;top:10px;right:12px;gap:4px"></div>
   </div>
 
-  <!-- Mode Toggle -->
-  <div style="display:flex;gap:0;margin-bottom:16px;border:1px solid var(--border);border-radius:8px;overflow:hidden">
-    <button id="btn-altbau" onclick="setMode('altbau')" style="flex:1;padding:9px;background:var(--gold);color:var(--navy);border:none;font-weight:700;font-size:0.78rem;cursor:pointer;transition:background-color 180ms var(--ease-out),color 180ms var(--ease-out)">Altbau / Renovation</button>
-    <button id="btn-neubau" onclick="setMode('neubau')" style="flex:1;padding:9px;background:transparent;color:var(--dim);border:none;font-size:0.78rem;cursor:pointer;letter-spacing:0.3px;transition:background-color 180ms var(--ease-out),color 180ms var(--ease-out)">Neubau</button>
+  <!-- Mode + Energy Class pills -->
+  <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+    <span id="mode-label-display" style="display:inline-flex;align-items:center;padding:6px 14px;border-radius:20px;font-size:0.76rem;font-weight:700;letter-spacing:.03em;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.4);color:var(--gold)">Altbau / Renovation</span>
+    <span id="energy-class-display" style="display:none;align-items:center;padding:6px 14px;border-radius:20px;font-size:0.76rem;font-weight:700;letter-spacing:.03em"></span>
   </div>
 
   <div class="sec">
@@ -543,8 +547,9 @@ function setMode(m) {
   currentMode = m;
   window.currentMode = m;
   const isN = m === 'neubau';
-  G('btn-altbau').style.cssText = `flex:1;padding:9px;background:${isN?'transparent':'var(--gold)'};color:${isN?'var(--dim)':'var(--navy)'};border:none;font-weight:${isN?'400':'700'};font-size:0.78rem;cursor:pointer;transition:background-color 180ms var(--ease-out),color 180ms var(--ease-out)`;
-  G('btn-neubau').style.cssText = `flex:1;padding:9px;background:${isN?'var(--gold)':'transparent'};color:${isN?'var(--navy)':'var(--dim)'};border:none;font-weight:${isN?'700':'400'};font-size:0.78rem;cursor:pointer;letter-spacing:0.3px;transition:background-color 180ms var(--ease-out),color 180ms var(--ease-out)`;
+  const lbl = G('mode-label-display');
+  if (lbl) lbl.textContent = isN ? 'Neubau' : 'Altbau / Renovation';
+  if (lbl) lbl.style.display = 'inline-flex';
   G('sec-neubau').style.display  = isN ? '' : 'none';
   G('row-altbau-afa').style.display = isN ? 'none' : '';
   G('sec-renov').style.display   = isN ? 'none' : '';
@@ -1192,7 +1197,7 @@ window.mobTab = function(tab){
   const _params    = new URLSearchParams(location.search);
   const clientId   = _params.get('client');
   const propertyId = _params.get('property');
-  let clientData = null, propertyData = null;
+  let clientData = null, propertyData = null, cachedPropDataList = null;
 
   function showPortalView() {
     document.getElementById('portal-view').style.display = 'block';
@@ -1229,8 +1234,11 @@ window.mobTab = function(tab){
       const rent  = p.rent ? ('€' + Number(p.rent).toLocaleString('de-DE') + '/mo') : '—';
       const yield_ = (p.price && p.rent) ? ((p.rent * 12 / p.price * 100).toFixed(1) + '%') : '—';
       const year  = p.buildYear || '—';
+      const ec = p.energyClass || '';
+      const ecCls = ec ? 'energy-' + ec.replace('+','p') : '';
+      const energyBadge = ec ? `<span class="energy-badge ${ecCls}">${ec}</span>` : '';
       return `<div class="prop-card" onclick="location.href='?client=${clientId}&property=${id}'">
-        <div class="prop-card-photo">${photo}${statusBadge}</div>
+        <div class="prop-card-photo">${photo}${energyBadge}${statusBadge}</div>
         <div class="prop-card-body">
           <div class="prop-card-price">${price}</div>
           <div class="prop-card-addr">${addr}</div>
@@ -1239,6 +1247,7 @@ window.mobTab = function(tab){
             <div class="prop-card-stat"><label>Cold Rent</label><span>${rent}</span></div>
             <div class="prop-card-stat"><label>Gross Yield</label><span style="color:var(--green)">${yield_}</span></div>
             <div class="prop-card-stat"><label>Build Year</label><span>${year}</span></div>
+            ${ec ? `<div class="prop-card-stat"><label>Energy Class</label><span>${ec}</span></div>` : ''}
           </div>
         </div>
       </div>`;
@@ -1274,7 +1283,7 @@ window.mobTab = function(tab){
     if (addr && propertyData.address) addr.textContent = propertyData.address;
     if (sub) {
       const modeLabel = propertyData.mode === 'neubau' ? 'Neubau' : 'Altbau';
-      sub.textContent = [propertyData.city, modeLabel, propertyData.buildYear ? ('Baujahr ' + propertyData.buildYear) : null]
+      sub.textContent = [propertyData.city, modeLabel, propertyData.buildYear ? ('Baujahr ' + propertyData.buildYear) : null, propertyData.energyClass ? ('Energieklasse ' + propertyData.energyClass) : null]
         .filter(Boolean).join(' · ');
     }
 
@@ -1336,10 +1345,6 @@ window.mobTab = function(tab){
       const el = document.getElementById(id);
       if (el) el.disabled = true;
     });
-    document.getElementById('btn-altbau').onclick = null;
-    document.getElementById('btn-neubau').onclick = null;
-    document.getElementById('btn-altbau').style.cursor = 'default';
-    document.getElementById('btn-neubau').style.cursor = 'default';
   }
 
   function revealPage() {
@@ -1374,13 +1379,12 @@ window.mobTab = function(tab){
     let targetPropId = propertyId; // from ?property= URL param
 
     if (!targetPropId && propIds.length >= 1) {
-      // No specific property selected → always show the portal card grid
       const fetches = await Promise.all(propIds.map(pid => getDoc(doc(db, 'properties', pid))));
-      const propDataList = fetches
+      cachedPropDataList = fetches
         .map((s, i) => ({ id: propIds[i], p: s.exists() ? s.data() : null }))
         .filter(x => x.p);
       document.getElementById('client-gate').style.display = 'none';
-      renderPortal(propDataList);
+      renderPortal(cachedPropDataList);
       revealPage();
       return;
     }
@@ -1411,6 +1415,17 @@ window.mobTab = function(tab){
     lockPropertyFields();
     showCalculatorView();
     document.getElementById('locked-note').style.display = 'flex';
+    const ecEl = document.getElementById('locked-energy-class');
+    if (ecEl) ecEl.style.display = 'none';
+    const ecDisp = document.getElementById('energy-class-display');
+    if (ecDisp && propertyData && propertyData.energyClass) {
+      const ec = propertyData.energyClass.toUpperCase();
+      const ecColors = { 'A+':'#2ecc71','A':'#2ecc71','B':'#7bc67e','C':'#c8d96f','D':'#f0c030','E':'#e67e22','F':'#e74c3c','G':'#c0392b','H':'#9b59b6' };
+      const col = ecColors[ec] || '#7bc67e';
+      ecDisp.textContent = 'Energy Class ' + ec;
+      ecDisp.className = '';
+      ecDisp.style.cssText = `display:inline-flex;align-items:center;padding:6px 14px;border-radius:20px;font-size:0.76rem;font-weight:700;letter-spacing:.03em;background:${col}18;border:1px solid ${col}66;color:${col}`;
+    } else if (ecDisp) { ecDisp.style.display = 'none'; }
     document.getElementById('client-mode-name').textContent = clientData.name ? ('Viewing as ' + clientData.name) : '';
     document.getElementById('client-gate').style.display = 'none';
 
@@ -1449,6 +1464,25 @@ window.mobTab = function(tab){
     document.getElementById('btn-google-signin').onclick = () => {
       signInWithPopup(auth, new GoogleAuthProvider()).catch(e => showGateError(e.message));
     };
+
+    // Clicking the brand area in the calculator header returns to the portal grid
+    const headerBrand = document.querySelector('.header > div');
+    if (headerBrand) {
+      headerBrand.style.cursor = 'pointer';
+      headerBrand.onclick = async () => {
+        if (!cachedPropDataList && clientData) {
+          const pids = getAssignedPropIds(clientData);
+          if (pids.length >= 1) {
+            const snaps = await Promise.all(pids.map(pid => getDoc(doc(db, 'properties', pid))));
+            cachedPropDataList = snaps
+              .map((s, i) => ({ id: pids[i], p: s.exists() ? s.data() : null }))
+              .filter(x => x.p);
+          }
+        }
+        history.pushState({}, '', '?client=' + clientId);
+        if (cachedPropDataList) renderPortal(cachedPropDataList); else showPortalView();
+      };
+    }
     // Firebase can fire onAuthStateChanged once with null while it's still restoring
     // a persisted session, then again with the real user a moment later. Waiting for
     // authStateReady() first means our listener only ever sees the settled state,
@@ -1469,7 +1503,7 @@ window.mobTab = function(tab){
         await loadAndApplyPropertyAndPersonal();
       } catch (e) {
         console.error(e);
-        showGateError('Something went wrong loading your data.');
+        showGateError('Something went wrong loading your data. Please refresh and try again.');
       }
     });
   }

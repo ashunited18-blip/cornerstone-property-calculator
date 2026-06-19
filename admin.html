@@ -209,6 +209,7 @@ td:first-child{font-weight:600}
         <div class="field-row"><label>Address</label><input id="prop-address" placeholder="Asamstrasse WE3"></div>
         <div class="field-row"><label>City</label><input id="prop-city" placeholder="Ingolstadt"></div>
         <div class="field-row"><label>Build Year</label><input id="prop-buildYear" placeholder="1934"></div>
+        <div class="field-row"><label>Energy Class</label><input id="prop-energyClass" type="text" placeholder="e.g. A, B, C" maxlength="3" style="text-transform:uppercase"></div>
         <div class="field-row"><label>Status</label>
           <select id="prop-status"><option value="available">Available</option><option value="reserved">Reserved</option><option value="sold">Sold</option></select>
         </div>
@@ -637,6 +638,20 @@ td:first-child{font-weight:600}
 
   function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
+  function showToast(msg) {
+    let t = document.getElementById('admin-toast');
+    if (!t) {
+      t = document.createElement('div');
+      t.id = 'admin-toast';
+      t.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:rgba(201,168,76,0.15);border:1px solid var(--gold);color:var(--gold-bright);font-size:0.82rem;padding:10px 20px;border-radius:8px;z-index:9999;transition:opacity .3s;pointer-events:none;backdrop-filter:blur(8px)';
+      document.body.appendChild(t);
+    }
+    t.textContent = msg;
+    t.style.opacity = '1';
+    clearTimeout(t._hide);
+    t._hide = setTimeout(() => { t.style.opacity = '0'; }, 2000);
+  }
+
   // ── Property modal ──
   const MAX_PHOTOS = 5;
   let currentPhotos = []; // array of compressed base64 data URLs for the property being added/edited
@@ -755,6 +770,7 @@ td:first-child{font-weight:600}
     document.getElementById('prop-id').value = '';
     document.getElementById('prop-doc-status').style.display = 'none';
     ['address','city','buildYear'].forEach(f => document.getElementById('prop-' + f).value = '');
+    document.getElementById('prop-energyClass').value = '';
     document.getElementById('prop-status').value = 'available';
     document.getElementById('prop-mode').value = 'altbau';
     editingPropClientIds = [];
@@ -771,7 +787,7 @@ td:first-child{font-weight:600}
     if (!p) return;
     document.getElementById('property-modal-title').textContent = 'Edit Property';
     document.getElementById('prop-id').value = id;
-    const fields = ['address','city','buildYear','status','mode','price','rent','build','area','ttax','notary','broker','fin','ir','amort','afa','hmgmt','tmgmt','renov','kfw'];
+    const fields = ['address','city','buildYear','energyClass','status','mode','price','rent','build','area','ttax','notary','broker','fin','ir','amort','afa','hmgmt','tmgmt','renov','kfw'];
     fields.forEach(f => { const el = document.getElementById('prop-' + f); if (el && p[f] !== undefined) el.value = p[f]; });
     if (p['kfw-ir'] !== undefined) document.getElementById('prop-kfw-ir').value = p['kfw-ir'];
     currentPhotos = Array.isArray(p.photos) ? p.photos.slice() : [];
@@ -809,6 +825,7 @@ td:first-child{font-weight:600}
       address: document.getElementById('prop-address').value,
       city: document.getElementById('prop-city').value,
       buildYear: document.getElementById('prop-buildYear').value,
+      energyClass: document.getElementById('prop-energyClass').value,
       status: status,
       mode: document.getElementById('prop-mode').value,
       price: Number(document.getElementById('prop-price').value),
@@ -929,7 +946,7 @@ td:first-child{font-weight:600}
   window.copyClientLinkAdmin = function (id) {
     const url = CALCULATOR_URL + '?client=' + id;
     navigator.clipboard.writeText(url).catch(() => {});
-    alert('Link copied:\n' + url);
+    showToast('Link copied');
   };
 
   window.deleteProperty = async function (id) {
